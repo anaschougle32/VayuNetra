@@ -1,3 +1,6 @@
+// Global variables for map components
+let map, startMarker, endMarker, directionsService, directionsRenderer;
+
 // Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
     console.log("DOM Content Loaded");
@@ -49,7 +52,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // We don't initialize the map here anymore - it will be called by the callback
+    // Set up location change handlers
+    const startLocationSelect = document.getElementById('start-location');
+    const endLocationSelect = document.getElementById('end-location');
+    
+    if (startLocationSelect) {
+        startLocationSelect.addEventListener('change', function() {
+            handleLocationSelection(this.value, 'start');
+        });
+        
+        // Default to home for start location
+        if (document.querySelector('#start-location option[value="home"]')) {
+            startLocationSelect.value = 'home';
+            // Trigger change event after map is loaded
+        }
+    }
+    
+    if (endLocationSelect) {
+        endLocationSelect.addEventListener('change', function() {
+            handleLocationSelection(this.value, 'end');
+        });
+        
+        // Look for the first employer location (likely FAU)
+        const firstEmployerOption = document.querySelector('#end-location option:not([value="home"]):not([value="other"]):not([value=""])');
+        if (firstEmployerOption) {
+            endLocationSelect.value = firstEmployerOption.value;
+            // Will be triggered after map load
+        }
+    }
 });
 
 // Set up transport option clicks
@@ -142,9 +172,6 @@ function addNotification(message, type = 'info') {
     }, 5000);
 }
 
-// Global variables for map components
-let map, startMarker, endMarker, directionsService, directionsRenderer;
-
 // Initialize Google Maps when API is loaded
 function initMap() {
     console.log("Google Maps API loaded");
@@ -161,9 +188,12 @@ function initMap() {
         return;
     }
     
+    // Define Boca Raton coordinates
+    var bocaRatonLocation = { lat: 26.351915, lng: -80.138568 }; // Exact Boca Raton coordinates
+    
     map = new google.maps.Map(mapElement, {
         zoom: 12,
-        center: { lat: 27.6648, lng: -81.5158 }, // Default center (Florida)
+        center: bocaRatonLocation, // Center on Boca Raton
         mapTypeControl: true,
         streetViewControl: false,
         fullscreenControl: true
@@ -171,7 +201,7 @@ function initMap() {
     
     // Create markers for start and end locations
     startMarker = new google.maps.Marker({
-        position: defaultLocation,
+        position: bocaRatonLocation,
         map: map,
         draggable: true,
         icon: {
@@ -181,12 +211,13 @@ function initMap() {
         animation: google.maps.Animation.DROP,
         title: 'Start Location'
     });
-
-    var defaultLocation = { lat: 27.6648, lng: -74.0060 };
+    
+    // Define FAU location
+    var fauLocation = { lat: 26.368322, lng: -80.097404 }; // Exact FAU coordinates
     
     endMarker = new google.maps.Marker({
         map: map,
-        position: defaultLocation,
+        position: fauLocation,
         draggable: true,
         icon: {
             url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
@@ -265,9 +296,7 @@ function initMap() {
             }
             
             // Try to calculate route
-            if (startMarker.getMap() && endMarker.getMap()) {
-                calculateRoute();
-            }
+            calculateRouteIfPossible();
         });
     }
     
@@ -279,132 +308,164 @@ function initMap() {
         startSelect.addEventListener('change', function() {
             handleLocationSelection(this.value, 'start');
         });
+        
+        // Trigger change for initial selection
+        if (startSelect.value) {
+            handleLocationSelection(startSelect.value, 'start');
+        }
     }
     
     if (endSelect) {
         endSelect.addEventListener('change', function() {
             handleLocationSelection(this.value, 'end');
         });
-    }
-}
-
-// Handle location selection from dropdowns
-function handleLocationSelection(locationValue, locationType) {
-    if (!locationValue) return;
-    
-    // Skip for "other" option (handled by map click)
-    if (locationValue === 'other') return;
-    
-    // Get selected option
-    const select = document.getElementById(locationType + '-location');
-    const option = select.options[select.selectedIndex];
-    
-    if (!option) return;
-    
-    // Get coordinates from data attributes
-    const lat = option.getAttribute('data-lat');
-    const lng = option.getAttribute('data-lng');
-    
-    if (!lat || !lng) {
-        console.warn('Selected location missing coordinates');
-        return;
-    }
-    
-    const location = {
-        lat: parseFloat(lat),
-        lng: parseFloat(lng)
-    };
-    
-    // Set appropriate marker
-    if (locationType === 'start') {
-        startMarker.setPosition(location);
-        startMarker.setMap(map);
-    } else {
-        endMarker.setPosition(location);
-        endMarker.setMap(map);
-    }
-    
-    // Center map on this location
-    map.setCenter(location);
-    
-    // Try to calculate route
-    if (startMarker.getMap() && endMarker.getMap()) {
-        calculateRoute();
-    }
-}
-
-// Calculate route between start and end
-function calculateRoute() {
-    if (!startMarker.getMap() || !endMarker.getMap()) {
-        console.warn('Cannot calculate route: missing markers');
-        return;
-    }
-    
-    // Get transport mode from selected option
-    const transportMode = document.getElementById('transport-mode').value;
-    if (!transportMode) {
-        console.warn('No transport mode selected');
-        return;
-    }
-    
-    // Map transport modes to Google Maps travel modes
-    let travelMode;
-    switch (transportMode) {
-        case 'walking':
-            travelMode = google.maps.TravelMode.WALKING;
-            break;
-        case 'bicycle':
-            travelMode = google.maps.TravelMode.BICYCLING;
-            break;
-        case 'public_transport':
-            travelMode = google.maps.TravelMode.TRANSIT;
-            break;
-        default:
-            travelMode = google.maps.TravelMode.DRIVING;
-    }
-    
-    // Create route request
-    const request = {
-        origin: startMarker.getPosition(),
-        destination: endMarker.getPosition(),
-        travelMode: travelMode
-    };
-    
-    // Calculate route
-    directionsService.route(request, function(result, status) {
-        if (status === google.maps.DirectionsStatus.OK) {
-            // Display route
-            directionsRenderer.setDirections(result);
-            
-            // Calculate distance and duration
-            const route = result.routes[0];
-            let distance = 0;
-            let duration = 0;
-            
-            route.legs.forEach(leg => {
-                distance += leg.distance.value;
-                duration += leg.duration.value;
-            });
-            
-            // Convert to km and minutes
-            const distanceKm = Math.round(distance / 100) / 10;
-            const durationMin = Math.round(duration / 60);
-            
-            // Update hidden field
-            document.getElementById('distance-km').value = distanceKm;
-            
-            // Update preview
-            updateTripPreview(distanceKm, durationMin);
-        } else {
-            console.error('Directions request failed:', status);
+        
+        // Trigger change for initial selection
+        if (endSelect.value) {
+            handleLocationSelection(endSelect.value, 'end');
         }
-    });
+    }
 }
 
-// Calculate route if possible (called from transport mode selection)
+// Handle location selection for start or end points
+function handleLocationSelection(locationValue, locationType) {
+    console.log(`Handling ${locationType} location selection: ${locationValue}`);
+    
+    // Define default locations
+    var bocaRatonLocation = { lat: 26.351915, lng: -80.138568 }; // Exact Boca Raton coordinates
+    var fauLocation = { lat: 26.368322, lng: -80.097404 }; // Exact FAU coordinates
+    
+    // Get the appropriate marker based on location type
+    let marker = locationType === 'start' ? startMarker : endMarker;
+    
+    // Show marker by default
+    marker.setMap(map);
+    
+    // Handle different location types
+    if (locationValue === 'home') {
+        // Use home location
+        marker.setPosition(bocaRatonLocation);
+        marker.setDraggable(false);
+        
+        // Store location in data attribute for later retrieval
+        if (locationType === 'start') {
+            document.getElementById('start-location').setAttribute('data-location', JSON.stringify(bocaRatonLocation));
+        } else {
+            document.getElementById('end-location').setAttribute('data-location', JSON.stringify(bocaRatonLocation));
+        }
+    } else if (locationValue === 'other') {
+        // Custom location - allow dragging
+        marker.setDraggable(true);
+        
+        // Position the marker in the center of the current map view if not already placed
+        const currentPosition = marker.getPosition();
+        if (!currentPosition) {
+            marker.setPosition(map.getCenter());
+        }
+        
+        // Focus on the search input to encourage user to search
+        document.getElementById('map-search-input').focus();
+    } else {
+        // Check if this is a location ID (from employer locations)
+        if (!isNaN(parseInt(locationValue))) {
+            // Try to get lat/lng from the option
+            const select = document.getElementById(`${locationType}-location`);
+            const option = select.querySelector(`option[value="${locationValue}"]`);
+            
+            if (option) {
+                const lat = parseFloat(option.getAttribute('data-lat'));
+                const lng = parseFloat(option.getAttribute('data-lng'));
+                
+                if (!isNaN(lat) && !isNaN(lng)) {
+                    const position = { lat, lng };
+                    marker.setPosition(position);
+                    marker.setDraggable(false);
+                    
+                    // Store location
+                    if (locationType === 'start') {
+                        document.getElementById('start-location').setAttribute('data-location', JSON.stringify(position));
+                    } else {
+                        document.getElementById('end-location').setAttribute('data-location', JSON.stringify(position));
+                    }
+                } else {
+                    // Fallback to FAU if for some reason coordinates aren't available
+                    marker.setPosition(fauLocation);
+                    marker.setDraggable(false);
+                }
+            } else {
+                // Fallback to FAU if option not found
+                marker.setPosition(fauLocation);
+                marker.setDraggable(false);
+            }
+        }
+    }
+    
+    // Calculate route if both locations are set
+    calculateRouteIfPossible();
+}
+
+// Calculate route if possible
 function calculateRouteIfPossible() {
-    if (startMarker && endMarker && startMarker.getMap() && endMarker.getMap()) {
-        calculateRoute();
+    // Check if both locations are selected and visible
+    if (startMarker && endMarker) {
+        // Ensure markers are visible
+        startMarker.setMap(map);
+        endMarker.setMap(map);
+        
+        // Get marker positions
+        const start = startMarker.getPosition();
+        const end = endMarker.getPosition();
+        
+        // Make sure both positions exist
+        if (start && end) {
+            // Initialize directions service if needed
+            if (!directionsService) {
+                directionsService = new google.maps.DirectionsService();
+                directionsRenderer = new google.maps.DirectionsRenderer({
+                    map: map,
+                    suppressMarkers: true,
+                    polylineOptions: {
+                        strokeColor: '#2B9348',
+                        strokeWeight: 5
+                    }
+                });
+            }
+            
+            // Calculate and display route
+            directionsService.route({
+                origin: start,
+                destination: end,
+                travelMode: getTravelMode()
+            }, function(response, status) {
+                if (status === 'OK') {
+                    directionsRenderer.setDirections(response);
+                    
+                    // Get distance and duration
+                    const route = response.routes[0];
+                    if (route && route.legs && route.legs.length > 0) {
+                        const leg = route.legs[0];
+                        const distance = leg.distance.value / 1000; // Convert to km
+                        const duration = leg.duration.value / 60; // Convert to minutes
+                        
+                        // Update form field with distance
+                        document.getElementById('distance-km').value = distance.toFixed(2);
+                        
+                        // Update preview
+                        updateTripPreview(distance, duration);
+                        
+                        // Show preview section
+                        document.getElementById('trip-preview').classList.remove('hidden');
+                    }
+                } else {
+                    console.error('Directions request failed:', status);
+                    addNotification('Could not calculate route. Please try different locations.', 'error');
+                }
+            });
+        } else {
+            console.warn('Missing start or end position');
+        }
+    } else {
+        console.warn('Missing markers');
     }
 }
 
@@ -460,11 +521,29 @@ function updateTripPreview(distance, duration) {
     
     // Update preview elements
     document.getElementById('preview-transport').textContent = modeName;
-    document.getElementById('preview-distance').textContent = distance + ' km';
-    document.getElementById('preview-duration').textContent = duration + ' min';
-    document.getElementById('preview-credits').textContent = totalCredits + ' credits';
+    document.getElementById('preview-distance').textContent = distance.toFixed(2) + ' km';
+    document.getElementById('preview-duration').textContent = Math.round(duration) + ' min';
+    document.getElementById('preview-credits').textContent = totalCredits.toFixed(1) + ' credits';
+}
+
+// Get the Google Maps travel mode based on selected transport mode
+function getTravelMode() {
+    const transportMode = document.getElementById('transport-mode').value;
+    
+    // Map our transport modes to Google Maps travel modes
+    switch(transportMode) {
+        case 'walking':
+            return google.maps.TravelMode.WALKING;
+        case 'bicycle':
+            return google.maps.TravelMode.BICYCLING;
+        case 'public_transport':
+            return google.maps.TravelMode.TRANSIT;
+        case 'carpool':
+        case 'car':
+        default:
+            return google.maps.TravelMode.DRIVING;
+    }
 }
 
 // Make sure initMap is available globally for Google Maps API callback
 window.initMap = initMap;
-console.log("initMap function exported to window:", typeof window.initMap === 'function' ? 'YES' : 'NO'); 

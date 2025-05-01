@@ -31,11 +31,6 @@ class EmployeeRegistrationForm(forms.Form):
         widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_employee_id'})
     )
     
-    # Home address information
-    home_address = forms.CharField(
-        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_home_address'})
-    )
-    
     # Terms agreement
     terms = forms.BooleanField(
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input', 'id': 'id_terms'})

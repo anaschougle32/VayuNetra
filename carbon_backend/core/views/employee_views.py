@@ -159,12 +159,54 @@ def trip_log(request):
         location_type='home'
     ).first()
     
-    has_home_location = home_location is not None
+    # If user doesn't have a home location, create a default one automatically
+    if not home_location:
+        # Create a default home location with the exact Boca Raton coordinates
+        default_address = "Boca Raton, Florida, USA"
+        default_lat = 26.351915  # Exact Boca Raton latitude
+        default_lng = -80.138568  # Exact Boca Raton longitude
+        
+        home_location = Location.objects.create(
+            created_by=request.user,
+            location_type='home',
+            address=default_address,
+            latitude=default_lat,
+            longitude=default_lng,
+            name=f"Home - Boca Raton",
+            is_primary=True
+        )
+        
+        messages.info(request, "A default home location in Boca Raton has been created for you. You can update it in your profile settings.")
+    
+    has_home_location = True  # We now always have a home location
     
     # Get employer's locations
     employer_locations = []
     if employee.employer:
         employer_locations = employee.employer.office_locations.all()
+        
+        # If employer has no office locations, create a default one for Florida Atlantic University
+        if not employer_locations.exists():
+            default_office_address = "Florida Atlantic University, 777 Glades Rd, Boca Raton, FL 33431, USA"
+            default_office_lat = 26.368322  # Exact FAU latitude
+            default_office_lng = -80.097404  # Exact FAU longitude
+            
+            # Create default office location
+            office_location = Location.objects.create(
+                created_by=request.user,
+                location_type='office',
+                address=default_office_address,
+                latitude=default_office_lat,
+                longitude=default_office_lng,
+                name="Office - Florida Atlantic University",
+                is_primary=True,
+                employer=employee.employer
+            )
+            
+            # Refresh the employer locations
+            employer_locations = employee.employer.office_locations.all()
+            
+            messages.info(request, "A default office location at Florida Atlantic University has been added for your employer.")
     
     # Get today's date for the form
     today = timezone.now()
