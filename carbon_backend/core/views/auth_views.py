@@ -17,19 +17,14 @@ def login_view(request):
                 request.session['registration_type'] = 'employer'
             return redirect('pending_approval')
             
-        # If approved, redirect to appropriate dashboard
-        if request.user.is_employee:
-            return redirect('employee_dashboard')
-        elif request.user.is_employer:
-            return redirect('employer_dashboard')
-        else:
-            return redirect('admin:index')
+        # If approved, redirect to quote page first
+        return redirect('quote_page')
     
     if request.method == 'POST':
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data.get('email')
-            password = form.cleaned_data.get('password')
+        email = request.POST.get('email') or request.POST.get('username')
+        password = request.POST.get('password')
+        
+        if email and password:
             user = authenticate(request, email=email, password=password)
             
             if user is not None:
@@ -47,18 +42,12 @@ def login_view(request):
                 
                 messages.success(request, f"Welcome back, {user.get_full_name()}!")
                 
-                if user.is_employee:
-                    return redirect('employee_dashboard')
-                elif user.is_employer:
-                    return redirect('employer_dashboard')
-                else:
-                    return redirect('admin:index')
+                # Redirect to quote page first, then to dashboard
+                return redirect('quote_page')
             else:
                 messages.error(request, "Invalid email or password. Please try again.")
-    else:
-        form = LoginForm()
     
-    return render(request, 'registration/login.html', {'form': form})
+    return render(request, 'auth/login.html', {})
 
 def logout_view(request):
     logout(request)

@@ -1,11 +1,25 @@
 """
 Utilities for calculating carbon credits based on 
 distance traveled and transport mode.
+
+DEPRECATED: This module is maintained for backward compatibility.
+New implementations should use improved_carbon_calculator.py
 """
 
 import logging
 from decimal import Decimal
 from core.models import SystemConfig
+
+# Import the new improved calculator
+try:
+    from .improved_carbon_calculator import (
+        calculate_carbon_credits as new_calculate_carbon_credits,
+        calculate_carbon_savings as new_calculate_carbon_savings,
+        get_transport_mode_info
+    )
+    NEW_CALCULATOR_AVAILABLE = True
+except ImportError:
+    NEW_CALCULATOR_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +88,9 @@ def get_base_rate():
 def calculate_carbon_credits(distance_km, transport_mode):
     """
     Calculate carbon credits based on distance and transport mode.
-    Formula: credits = distance * mode_multiplier * base_rate
+    
+    DEPRECATED: Use improved_carbon_calculator.calculate_carbon_credits() for new implementations.
+    This function is maintained for backward compatibility.
     
     Args:
         distance_km: Decimal distance in kilometers
@@ -83,6 +99,14 @@ def calculate_carbon_credits(distance_km, transport_mode):
     Returns:
         Decimal amount of carbon credits earned
     """
+    # Use new calculator if available
+    if NEW_CALCULATOR_AVAILABLE:
+        try:
+            return new_calculate_carbon_credits(float(distance_km), transport_mode)
+        except Exception as e:
+            logger.warning(f"New calculator failed, falling back to legacy: {str(e)}")
+    
+    # Legacy calculation (fallback)
     # Get multiplier for the transport mode
     multiplier = get_mode_multiplier(transport_mode)
     
@@ -100,6 +124,9 @@ def calculate_carbon_savings(distance_km, transport_mode):
     """
     Calculate carbon savings in kg of CO2 based on distance and transport mode.
     
+    DEPRECATED: Use improved_carbon_calculator.calculate_carbon_savings() for new implementations.
+    This function is maintained for backward compatibility.
+    
     Args:
         distance_km: Decimal distance in kilometers
         transport_mode: String representing the transport mode
@@ -107,6 +134,15 @@ def calculate_carbon_savings(distance_km, transport_mode):
     Returns:
         Decimal amount of carbon savings in kg of CO2
     """
+    # Use new calculator if available
+    if NEW_CALCULATOR_AVAILABLE:
+        try:
+            carbon_saved, _ = new_calculate_carbon_savings(float(distance_km), transport_mode)
+            return carbon_saved
+        except Exception as e:
+            logger.warning(f"New calculator failed, falling back to legacy: {str(e)}")
+    
+    # Legacy calculation (fallback)
     # Average car emissions per km (in kg of CO2)
     car_emissions_per_km = Decimal('0.192')
     

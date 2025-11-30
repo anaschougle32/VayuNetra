@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Carbon Credits Platform{% endblock %}</title>
+    <title>{% block title %}VayuNetra{% endblock %}</title>
     
     <!-- Add Poppins font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -15,7 +15,7 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     
     <!-- HTMX -->
-    <script src="https://unpkg.com/htmx.org@1.9.9" integrity="sha384-QFjmbokDn2DjBjq+fM+8LUIVrAgqcNW2s0PjwXYk+vwRH4GuYK+wT1fZbSvv2Oe4" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.9" crossorigin="anonymous"></script>
     
     <!-- Custom CSS -->
     <style>
@@ -244,7 +244,7 @@
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                             </svg>
-                            <span class="ml-2 text-xl font-bold text-green-700">Carbon Credits</span>
+                            <span class="ml-2 text-xl font-bold text-green-700">VayuNetra</span>
                         </a>
                     </div>
                     
@@ -265,6 +265,7 @@
                         <a href="{% url 'employer:employees' %}" class="nav-link {% if request.resolver_match.url_name == 'employees' %}active{% endif %}">Employees</a>
                         <a href="{% url 'employer:locations' %}" class="nav-link {% if request.resolver_match.url_name == 'locations' %}active{% endif %}">Locations</a>
                         <a href="{% url 'employer:trading' %}" class="nav-link {% if request.resolver_match.url_name == 'trading' %}active{% endif %}">Trading</a>
+                        <a href="{% url 'employer:redemption_requests' %}" class="nav-link {% if request.resolver_match.url_name == 'redemption_requests' %}active{% endif %}">Redemption Requests</a>
                         {% elif user.is_employee %}
                         <a href="{% url 'employee_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_dashboard' %}active{% endif %}">Dashboard</a>
                         <a href="{% url 'employee_trip_log' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_trip_log' %}active{% endif %}">Log Trip</a>
@@ -276,6 +277,30 @@
                 
                 <div class="flex items-center">
                     {% if user.is_authenticated %}
+                    <!-- Notification Bell Icon -->
+                    <div class="ml-3 relative" id="notification-container">
+                        <button type="button" class="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 rounded-full" id="notification-button" aria-expanded="false" aria-haspopup="true">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
+                            </svg>
+                            <span class="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" id="notification-badge" style="display: none;"></span>
+                        </button>
+                        
+                        <!-- Notification Dropdown -->
+                        <div class="hidden origin-top-right absolute right-0 mt-2 w-80 rounded-xl shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" id="notification-dropdown" style="max-height: 500px; overflow-y: auto;">
+                            <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+                                <h3 class="text-lg font-semibold text-gray-900">Notifications</h3>
+                                <button type="button" class="text-sm text-green-600 hover:text-green-800" id="mark-all-read-btn">Mark all read</button>
+                            </div>
+                            <div id="notification-list" class="divide-y divide-gray-200">
+                                <div class="p-4 text-center text-gray-500">Loading notifications...</div>
+                            </div>
+                            <div class="p-2 border-t border-gray-200 text-center">
+                                <a href="#" class="text-sm text-green-600 hover:text-green-800">View all notifications</a>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="ml-3 relative">
                         <div>
                             <button type="button" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
@@ -320,7 +345,7 @@
                     <span class="ml-2 text-lg font-semibold text-green-700">Carbon Credits</span>
                 </div>
                 <p class="text-center text-gray-500 text-sm">
-                    &copy; {% now "Y" %} Carbon Credits Platform. All rights reserved.
+                    &copy; {% now "Y" %} VayuNetra. All rights reserved.
                 </p>
             </div>
         </div>

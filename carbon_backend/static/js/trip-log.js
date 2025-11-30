@@ -141,6 +141,7 @@ function addNotification(message, type = 'info') {
     container.className = `p-4 rounded-lg mb-4 ${
         type === 'success' ? 'bg-green-100 text-green-800' : 
         type === 'error' ? 'bg-red-100 text-red-800' : 
+        type === 'warning' ? 'bg-yellow-100 text-yellow-800' :
         'bg-blue-100 text-blue-800'
     }`;
     container.textContent = message;
@@ -174,34 +175,114 @@ function addNotification(message, type = 'info') {
 
 // Initialize Google Maps when API is loaded
 function initMap() {
-    console.log("Google Maps API loaded");
+    console.log("initMap called - Google Maps API callback triggered");
     
-    // Hide all map loading indicators
-    document.querySelectorAll('.map-loading').forEach(loading => {
-        loading.style.display = 'none';
-    });
-    
-    // Create map
-    const mapElement = document.getElementById('trip-map');
-    if (!mapElement) {
-        console.error("Map element not found");
-        return;
+    // Wait a moment to ensure DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+        });
+    } else {
+        // Small delay to ensure everything is ready
+        setTimeout(initializeMap, 100);
     }
+}
+
+function initializeMap() {
+    console.log("initializeMap() called");
+    console.log("Document ready state:", document.readyState);
+    console.log("Map element exists:", !!document.getElementById('trip-map'));
     
-    // Define Boca Raton coordinates
-    var bocaRatonLocation = { lat: 26.351915, lng: -80.138568 }; // Exact Boca Raton coordinates
+    // Declare settingLocationType at function scope level
+    let settingLocationType = null;
     
-    map = new google.maps.Map(mapElement, {
-        zoom: 12,
-        center: bocaRatonLocation, // Center on Boca Raton
-        mapTypeControl: true,
-        streetViewControl: false,
-        fullscreenControl: true
-    });
+    try {
+        // Check if Google Maps is available
+        if (typeof google === 'undefined') {
+            throw new Error('Google Maps API not loaded - google object is undefined. Check API key and ensure Maps JavaScript API is enabled.');
+        }
+        
+        if (typeof google.maps === 'undefined') {
+            throw new Error('Google Maps API not loaded - google.maps object is undefined. Check if libraries are loading correctly.');
+        }
+        
+        console.log("Google Maps API is available");
+        console.log("Google Maps version:", google.maps.version || 'unknown');
+        
+        // Hide all map loading indicators
+        document.querySelectorAll('.map-loading').forEach(loading => {
+            loading.style.display = 'none';
+        });
+        
+        // Create map
+        const mapElement = document.getElementById('trip-map');
+        if (!mapElement) {
+            console.error("Map element not found");
+            // Try again after a short delay
+            setTimeout(function() {
+                const retryElement = document.getElementById('trip-map');
+                if (retryElement) {
+                    initializeMap();
+                } else {
+                    console.error("Map element still not found after retry");
+                }
+            }, 500);
+            return;
+        }
+    
+        // Thane, Maharashtra, India coordinates (default location)
+        var thaneLocation = { lat: 19.2183, lng: 72.9781 }; // Thane, Maharashtra, India
+        
+        // Create map first
+        map = new google.maps.Map(mapElement, {
+            zoom: 13,
+            center: thaneLocation, // Center on Thane, India (fallback)
+            mapTypeControl: true,
+            streetViewControl: false,
+            fullscreenControl: true,
+            zoomControl: true
+        });
+        
+        console.log("Map created successfully");
+        
+        // Try to get user's current location using GPS after map is created
+        if (navigator.geolocation) {
+            console.log("Requesting GPS location access...");
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    console.log("GPS location obtained:", userLocation);
+                    map.setCenter(userLocation);
+                    map.setZoom(15);
+                    
+                    // Optionally set start marker to user location if it exists
+                    if (typeof startMarker !== 'undefined' && startMarker) {
+                        startMarker.setPosition(userLocation);
+                        if (!startMarker.getMap()) {
+                            startMarker.setMap(map);
+                        }
+                    }
+                },
+                function(error) {
+                    console.log("GPS access denied or error:", error.message);
+                    // Keep default Thane location - already set
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        } else {
+            console.log("Geolocation not supported by browser");
+        }
     
     // Create markers for start and end locations
     startMarker = new google.maps.Marker({
-        position: bocaRatonLocation,
+        position: thaneLocation,
         map: map,
         draggable: true,
         icon: {
@@ -212,12 +293,12 @@ function initMap() {
         title: 'Start Location'
     });
     
-    // Define FAU location
-    var fauLocation = { lat: 26.368322, lng: -80.097404 }; // Exact FAU coordinates
+    // Default end location (Thane - different area)
+    var defaultEndLocation = { lat: 19.2300, lng: 72.9900 }; // Thane, India (different area)
     
     endMarker = new google.maps.Marker({
         map: map,
-        position: fauLocation,
+        position: defaultEndLocation,
         draggable: true,
         icon: {
             url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png',
@@ -243,23 +324,65 @@ function initMap() {
         }
     });
     
-    // Set up search box
+    // Set up search box with autocomplete for better UX
     const searchInput = document.getElementById('map-search-input');
     if (searchInput) {
-        const searchBox = new google.maps.places.SearchBox(searchInput);
+        // Use Autocomplete instead of SearchBox for better functionality
+        let autocomplete;
+        try {
+            autocomplete = new google.maps.places.Autocomplete(searchInput, {
+                types: ['geocode', 'establishment'],
+                componentRestrictions: { country: 'in' } // Restrict to India
+            });
+        } catch (e) {
+            console.warn('Autocomplete not available, using SearchBox:', e);
+            // Fallback to SearchBox
+            autocomplete = new google.maps.places.SearchBox(searchInput);
+        }
         
         // Bias search results to current map view
         map.addListener('bounds_changed', function() {
-            searchBox.setBounds(map.getBounds());
+            if (autocomplete.setBounds) {
+                autocomplete.setBounds(map.getBounds());
+            }
         });
         
+        // Update when dropdown changes
+        const startSelect = document.getElementById('start-location');
+        const endSelect = document.getElementById('end-location');
+        
+        if (startSelect) {
+            startSelect.addEventListener('focus', function() {
+                settingLocationType = 'start';
+                searchInput.placeholder = 'Search for start location...';
+            });
+        }
+        
+        if (endSelect) {
+            endSelect.addEventListener('focus', function() {
+                settingLocationType = 'end';
+                searchInput.placeholder = 'Search for end location...';
+            });
+        }
+        
         // Handle search results
-        searchBox.addListener('places_changed', function() {
-            const places = searchBox.getPlaces();
-            if (places.length === 0) return;
+        const handlePlaceSelect = function() {
+            let place;
             
-            const place = places[0];
-            if (!place.geometry || !place.geometry.location) return;
+            if (autocomplete.getPlace) {
+                // Autocomplete
+                place = autocomplete.getPlace();
+            } else {
+                // SearchBox fallback
+                const places = autocomplete.getPlaces();
+                if (places.length === 0) return;
+                place = places[0];
+            }
+            
+            if (!place || !place.geometry || !place.geometry.location) {
+                console.warn('Place has no geometry');
+                return;
+            }
             
             // Get location coordinates
             const location = {
@@ -268,45 +391,126 @@ function initMap() {
                 address: place.formatted_address || place.name
             };
             
-            // Determine if we're setting start or end location
-            const activeSelect = document.activeElement;
-            if (activeSelect && activeSelect.id === 'start-location') {
+            console.log('Place selected:', location);
+            
+            // Determine which location to set
+            const currentSettingType = settingLocationType || window.settingLocationType;
+            const locationType = currentSettingType || 
+                                (document.activeElement && document.activeElement.id === 'start-location' ? 'start' : 
+                                 document.activeElement && document.activeElement.id === 'end-location' ? 'end' : null);
+            
+            if (locationType === 'start') {
                 // Set start location
                 startMarker.setPosition(location);
                 startMarker.setMap(map);
-                activeSelect.value = 'other';
+                if (startSelect) {
+                    startSelect.value = 'other';
+                    // Create option if it doesn't exist
+                    if (!startSelect.querySelector('option[value="other"]')) {
+                        const option = document.createElement('option');
+                        option.value = 'other';
+                        option.textContent = location.address.substring(0, 50);
+                        startSelect.appendChild(option);
+                    }
+                }
                 
                 // Update hidden fields
-                document.getElementById('custom-lat').value = location.lat;
-                document.getElementById('custom-lng').value = location.lng;
-                document.getElementById('custom-address').value = location.address;
-            } else if (activeSelect && activeSelect.id === 'end-location') {
+                const customLat = document.getElementById('custom-lat');
+                const customLng = document.getElementById('custom-lng');
+                const customAddress = document.getElementById('custom-address');
+                if (customLat) customLat.value = location.lat;
+                if (customLng) customLng.value = location.lng;
+                if (customAddress) customAddress.value = location.address;
+                
+                // Show marker
+                map.setCenter(location);
+                map.setZoom(15);
+            } else if (locationType === 'end') {
                 // Set end location
                 endMarker.setPosition(location);
                 endMarker.setMap(map);
-                activeSelect.value = 'other';
+                if (endSelect) {
+                    endSelect.value = 'other';
+                    // Create option if it doesn't exist
+                    if (!endSelect.querySelector('option[value="other"]')) {
+                        const option = document.createElement('option');
+                        option.value = 'other';
+                        option.textContent = location.address.substring(0, 50);
+                        endSelect.appendChild(option);
+                    }
+                }
                 
                 // Update hidden fields
-                document.getElementById('custom-lat').value = location.lat;
-                document.getElementById('custom-lng').value = location.lng;
-                document.getElementById('custom-address').value = location.address;
-            } else {
-                // Default to setting center of map
+                const customLat = document.getElementById('custom-lat');
+                const customLng = document.getElementById('custom-lng');
+                const customAddress = document.getElementById('custom-address');
+                if (customLat) customLat.value = location.lat;
+                if (customLng) customLng.value = location.lng;
+                if (customAddress) customAddress.value = location.address;
+                
+                // Show marker
                 map.setCenter(location);
+                map.setZoom(15);
+            } else {
+                // Default: center map on location
+                map.setCenter(location);
+                map.setZoom(15);
             }
             
-            // Try to calculate route
-            calculateRouteIfPossible();
+            // Clear search input
+            searchInput.value = '';
+            
+            // Try to calculate route if both locations are set
+            setTimeout(calculateRouteIfPossible, 500);
+        };
+        
+        // Attach event listener based on type
+        if (autocomplete.addListener) {
+            // Autocomplete
+            autocomplete.addListener('place_changed', handlePlaceSelect);
+        } else if (autocomplete.getPlaces) {
+            // SearchBox
+            autocomplete.addListener('places_changed', handlePlaceSelect);
+        }
+        
+        // Also handle Enter key
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handlePlaceSelect();
+            }
         });
     }
     
-    // Set up location selectors
+    // Set up location selectors with search integration
     const startSelect = document.getElementById('start-location');
     const endSelect = document.getElementById('end-location');
     
     if (startSelect) {
         startSelect.addEventListener('change', function() {
-            handleLocationSelection(this.value, 'start');
+            if (this.value === 'other') {
+                // Focus search box when "Other" is selected
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.placeholder = 'Search for start location...';
+                    settingLocationType = 'start';
+                    if (window.updateSettingLocationType) {
+                        window.updateSettingLocationType('start');
+                    }
+                }
+            } else {
+                handleLocationSelection(this.value, 'start');
+            }
+        });
+        
+        startSelect.addEventListener('focus', function() {
+            settingLocationType = 'start';
+            if (window.updateSettingLocationType) {
+                window.updateSettingLocationType('start');
+            }
+            if (searchInput) {
+                searchInput.placeholder = 'Search for start location...';
+            }
         });
         
         // Trigger change for initial selection
@@ -317,7 +521,29 @@ function initMap() {
     
     if (endSelect) {
         endSelect.addEventListener('change', function() {
-            handleLocationSelection(this.value, 'end');
+            if (this.value === 'other') {
+                // Focus search box when "Other" is selected
+                if (searchInput) {
+                    searchInput.focus();
+                    searchInput.placeholder = 'Search for end location...';
+                    settingLocationType = 'end';
+                    if (window.updateSettingLocationType) {
+                        window.updateSettingLocationType('end');
+                    }
+                }
+            } else {
+                handleLocationSelection(this.value, 'end');
+            }
+        });
+        
+        endSelect.addEventListener('focus', function() {
+            settingLocationType = 'end';
+            if (window.updateSettingLocationType) {
+                window.updateSettingLocationType('end');
+            }
+            if (searchInput) {
+                searchInput.placeholder = 'Search for end location...';
+            }
         });
         
         // Trigger change for initial selection
@@ -325,15 +551,43 @@ function initMap() {
             handleLocationSelection(endSelect.value, 'end');
         }
     }
+    
+        // Make settingLocationType available globally for search handler
+        // Update it when dropdowns change
+        const updateSettingLocationType = function(type) {
+            settingLocationType = type;
+            window.settingLocationType = type;
+        };
+        
+        // Expose update function
+        window.updateSettingLocationType = updateSettingLocationType;
+    
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        console.error('Error details:', error.message, error.stack);
+        
+        // Show detailed error message
+        const errorMessage = error.message || 'Unknown error occurred';
+        document.querySelectorAll('.map-loading').forEach(loading => {
+            loading.innerHTML = `
+                <div class="p-4 bg-red-100 text-red-800 rounded">
+                    <strong>Error loading map:</strong><br>
+                    ${errorMessage}<br>
+                    <small>Please check the browser console for more details.</small>
+                </div>
+            `;
+            loading.style.display = 'flex';
+        });
+    }
 }
 
 // Handle location selection for start or end points
 function handleLocationSelection(locationValue, locationType) {
     console.log(`Handling ${locationType} location selection: ${locationValue}`);
     
-    // Define default locations
-    var bocaRatonLocation = { lat: 26.351915, lng: -80.138568 }; // Exact Boca Raton coordinates
-    var fauLocation = { lat: 26.368322, lng: -80.097404 }; // Exact FAU coordinates
+    // Define default locations (Thane, India)
+    var thaneLocation = { lat: 19.2183, lng: 72.9781 }; // Thane, Maharashtra, India
+    var thaneEastLocation = { lat: 19.2300, lng: 72.9900 }; // Thane East, India
     
     // Get the appropriate marker based on location type
     let marker = locationType === 'start' ? startMarker : endMarker;
@@ -343,15 +597,15 @@ function handleLocationSelection(locationValue, locationType) {
     
     // Handle different location types
     if (locationValue === 'home') {
-        // Use home location
-        marker.setPosition(bocaRatonLocation);
+        // Use home location (Thane)
+        marker.setPosition(thaneLocation);
         marker.setDraggable(false);
         
         // Store location in data attribute for later retrieval
         if (locationType === 'start') {
-            document.getElementById('start-location').setAttribute('data-location', JSON.stringify(bocaRatonLocation));
+            document.getElementById('start-location').setAttribute('data-location', JSON.stringify(thaneLocation));
         } else {
-            document.getElementById('end-location').setAttribute('data-location', JSON.stringify(bocaRatonLocation));
+            document.getElementById('end-location').setAttribute('data-location', JSON.stringify(thaneLocation));
         }
     } else if (locationValue === 'other') {
         // Custom location - allow dragging
@@ -388,13 +642,13 @@ function handleLocationSelection(locationValue, locationType) {
                         document.getElementById('end-location').setAttribute('data-location', JSON.stringify(position));
                     }
                 } else {
-                    // Fallback to FAU if for some reason coordinates aren't available
-                    marker.setPosition(fauLocation);
+                    // Fallback to Thane if for some reason coordinates aren't available
+                    marker.setPosition(thaneEastLocation);
                     marker.setDraggable(false);
                 }
             } else {
-                // Fallback to FAU if option not found
-                marker.setPosition(fauLocation);
+                // Fallback to Thane if option not found
+                marker.setPosition(thaneEastLocation);
                 marker.setDraggable(false);
             }
         }
@@ -448,14 +702,79 @@ function calculateRouteIfPossible() {
                         const duration = leg.duration.value / 60; // Convert to minutes
                         
                         // Update form field with distance
-                        document.getElementById('distance-km').value = distance.toFixed(2);
+                        const distanceInput = document.getElementById('distance-km');
+                        if (distanceInput) {
+                            distanceInput.value = distance.toFixed(2);
+                        }
+                        
+                        // Update distance display
+                        const distanceDisplay = document.getElementById('distance-display');
+                        const distanceValue = document.getElementById('distance-value');
+                        if (distanceDisplay && distanceValue) {
+                            distanceValue.textContent = distance.toFixed(2) + ' km';
+                            distanceDisplay.classList.remove('hidden');
+                        }
                         
                         // Update preview
                         updateTripPreview(distance, duration);
                         
                         // Show preview section
-                        document.getElementById('trip-preview').classList.remove('hidden');
+                        const previewSection = document.getElementById('trip-preview');
+                        if (previewSection) {
+                            previewSection.classList.remove('hidden');
+                        }
+                        
+                        // Update credit preview if calculation engine is loaded
+                        if (typeof updateCreditPreview === 'function') {
+                            updateCreditPreview();
+                        }
+                        
+                        // Auto-trigger environment data detection if both locations are set
+                        if (typeof autoDetectEnvironmentData === 'function') {
+                            autoDetectEnvironmentData(true); // true = silent mode (no user notification)
+                        }
                     }
+                } else if (status === 'REQUEST_DENIED') {
+                    console.warn('Directions API request denied. This usually means:');
+                    console.warn('1. Directions API is not enabled in Google Cloud Console');
+                    console.warn('2. Billing is not enabled for your project');
+                    console.warn('3. API key restrictions are blocking the request');
+                    
+                    // Calculate distance using Haversine formula as fallback
+                    const distance = calculateHaversineDistance(
+                        start.lat(), start.lng(),
+                        end.lat(), end.lng()
+                    );
+                    
+                    // Update form field with distance
+                    const distanceInput = document.getElementById('distance-km');
+                    if (distanceInput) {
+                        distanceInput.value = distance.toFixed(2);
+                    }
+                    
+                    // Update distance display
+                    const distanceDisplay = document.getElementById('distance-display');
+                    const distanceValue = document.getElementById('distance-value');
+                    if (distanceDisplay && distanceValue) {
+                        distanceValue.textContent = distance.toFixed(2) + ' km (straight line)';
+                        distanceDisplay.classList.remove('hidden');
+                    }
+                    
+                    // Draw a simple line between points
+                    const line = new google.maps.Polyline({
+                        path: [start, end],
+                        geodesic: true,
+                        strokeColor: '#10B981',
+                        strokeOpacity: 0.7,
+                        strokeWeight: 3,
+                        map: map
+                    });
+                    
+                    // Update preview with estimated values
+                    const estimatedDuration = (distance / 30) * 60; // Assume 30 km/h average
+                    updateTripPreview(distance, estimatedDuration);
+                    
+                    addNotification('Route calculation unavailable. Using straight-line distance. Enable Directions API and billing for full route calculation.', 'info');
                 } else {
                     console.error('Directions request failed:', status);
                     addNotification('Could not calculate route. Please try different locations.', 'error');
@@ -467,6 +786,170 @@ function calculateRouteIfPossible() {
     } else {
         console.warn('Missing markers');
     }
+}
+
+// Auto-detect environment data from API
+async function autoDetectEnvironmentData(silent = false) {
+    // Check if both locations are selected
+    const startSelect = document.getElementById('start-location');
+    const endSelect = document.getElementById('end-location');
+    
+    if (!startSelect || !endSelect || !startSelect.value || !endSelect.value) {
+        if (!silent) {
+            addNotification('Please select both start and end locations first.', 'warning');
+        }
+        return;
+    }
+    
+    // Get coordinates from markers
+    if (!startMarker || !endMarker) {
+        if (!silent) {
+            addNotification('Please wait for map to load completely.', 'warning');
+        }
+        return;
+    }
+    
+    const startPos = startMarker.getPosition();
+    const endPos = endMarker.getPosition();
+    
+    if (!startPos || !endPos) {
+        if (!silent) {
+            addNotification('Please select locations on the map first.', 'warning');
+        }
+        return;
+    }
+    
+    // Get trip date
+    const tripDateInput = document.getElementById('trip-date');
+    const tripDate = tripDateInput ? tripDateInput.value : new Date().toISOString().split('T')[0];
+    const tripTime = tripDate + 'T12:00:00'; // Default to noon
+    
+    // Show loading state
+    const autoDetectBtn = document.getElementById('auto-detect-btn');
+    const statusDiv = document.getElementById('auto-detect-status');
+    
+    if (autoDetectBtn) {
+        autoDetectBtn.disabled = true;
+        autoDetectBtn.innerHTML = '<svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Detecting...';
+    }
+    
+    if (statusDiv && !silent) {
+        statusDiv.classList.remove('hidden');
+        statusDiv.innerHTML = '<div class="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">🔄 Detecting environmental data...</div>';
+    }
+    
+    try {
+        // Call the API endpoint
+        const response = await fetch('/api/environment-data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                start_lat: startPos.lat(),
+                start_lng: startPos.lng(),
+                end_lat: endPos.lat(),
+                end_lng: endPos.lng(),
+                trip_time: tripTime
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Update form fields with detected values
+        if (data.time_period) {
+            const timePeriodSelect = document.getElementById('time_period');
+            if (timePeriodSelect) {
+                timePeriodSelect.value = data.time_period;
+            }
+        }
+        
+        if (data.traffic_condition) {
+            const trafficSelect = document.getElementById('traffic_condition');
+            if (trafficSelect) {
+                trafficSelect.value = data.traffic_condition;
+            }
+        }
+        
+        if (data.weather_condition) {
+            const weatherSelect = document.getElementById('weather_condition');
+            if (weatherSelect) {
+                weatherSelect.value = data.weather_condition;
+            }
+        }
+        
+        if (data.route_type) {
+            const routeSelect = document.getElementById('route_type');
+            if (routeSelect) {
+                routeSelect.value = data.route_type;
+            }
+        }
+        
+        if (data.aqi_level) {
+            const aqiSelect = document.getElementById('aqi_level');
+            if (aqiSelect) {
+                aqiSelect.value = data.aqi_level;
+            }
+        }
+        
+        if (data.season) {
+            const seasonSelect = document.getElementById('season');
+            if (seasonSelect) {
+                seasonSelect.value = data.season;
+            }
+        }
+        
+        // Update credit preview
+        if (typeof updateCreditPreview === 'function') {
+            updateCreditPreview();
+        }
+        
+        // Show success message
+        if (statusDiv && !silent) {
+            statusDiv.innerHTML = '<div class="p-3 bg-green-50 border border-green-200 rounded text-sm text-green-800">✅ Environment data detected and updated!</div>';
+            setTimeout(() => {
+                statusDiv.classList.add('hidden');
+            }, 3000);
+        }
+        
+        if (autoDetectBtn) {
+            autoDetectBtn.disabled = false;
+            autoDetectBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg><span>Auto-Detect All</span>';
+        }
+        
+    } catch (error) {
+        console.error('Error detecting environment data:', error);
+        
+        if (statusDiv && !silent) {
+            statusDiv.innerHTML = '<div class="p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">⚠️ Could not auto-detect. Please set values manually.</div>';
+        }
+        
+        if (autoDetectBtn) {
+            autoDetectBtn.disabled = false;
+            autoDetectBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg><span>Auto-Detect All</span>';
+        }
+    }
+}
+
+// Helper function to get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 // Update trip preview with calculated values
@@ -545,5 +1028,32 @@ function getTravelMode() {
     }
 }
 
+// Helper function to calculate distance using Haversine formula
+function calculateHaversineDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radius of the Earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
 // Make sure initMap is available globally for Google Maps API callback
-window.initMap = initMap;
+// This must be set before Google Maps API script loads
+if (typeof window.initMap === 'undefined' || window.initMap.toString().includes('Waiting for')) {
+    window.initMap = initMap;
+} else {
+    // If already defined, replace it with our implementation
+    window.initMap = initMap;
+}
+
+// Make autoDetectEnvironmentData globally available
+window.autoDetectEnvironmentData = autoDetectEnvironmentData;
+
+// Also export for direct access
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { initMap, calculateHaversineDistance, autoDetectEnvironmentData };
+}

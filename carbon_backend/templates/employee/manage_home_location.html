@@ -153,18 +153,19 @@
 </div>
 {% endblock %}
 
-{% block scripts %}
+{% block extra_js %}
+{% if google_maps_api_key and google_maps_api_key != 'AIzaSyA-test-key-for-development-only' and google_maps_api_key|length > 20 %}
 <!-- Load Google Maps API with the provided API key -->
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDwWRoTtWgjQc--nP3WoZpH6IrpTQ9gw7w&libraries=places,geometry" async defer></script>
+<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places,geometry&callback=initMap" async defer></script>
 <script>
     // Initialize globals
     var hasExistingLocation = {% if has_home_location %}true{% else %}false{% endif %};
-    var existingLat = {% if home_location.latitude %}"{{ home_location.latitude }}"{% else %}null{% endif %};
-    var existingLng = {% if home_location.longitude %}"{{ home_location.longitude }}"{% else %}null{% endif %};
+    var existingLat = {% if home_location.latitude %}{{ home_location.latitude }}{% else %}null{% endif %};
+    var existingLng = {% if home_location.longitude %}{{ home_location.longitude }}{% else %}null{% endif %};
     
     function initMap() {
-        // Default center (Mumbai)
-        var defaultCenter = { lat: 19.0760, lng: 72.8777 };
+        // Default center (Thane, Maharashtra, India)
+        var defaultCenter = { lat: 19.2183, lng: 72.9781 };
         
         // If we have existing coordinates, use them
         if (existingLat && existingLng) {
@@ -300,14 +301,13 @@
         }
     }
     
-    // Initialize map when Google Maps API is loaded
+    // Make initMap globally available
     window.initMap = initMap;
-    
-    // Load map when page is ready
-    document.addEventListener('DOMContentLoaded', function() {
-        if (window.google && window.google.maps) {
-            initMap();
-        }
-    });
 </script>
+{% else %}
+<script>
+    console.error('Google Maps API key not configured');
+    document.getElementById('map-loading').innerHTML = '<div class="p-4 bg-red-100 text-red-800 rounded">Google Maps API key not configured. Please contact administrator.</div>';
+</script>
+{% endif %}
 {% endblock %} 

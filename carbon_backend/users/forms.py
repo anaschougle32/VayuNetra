@@ -1,5 +1,15 @@
 from django import forms
+from django.contrib.auth.forms import AuthenticationForm
 from .models import CustomUser, EmployerProfile, EmployeeProfile, Location
+
+class LoginForm(AuthenticationForm):
+    """Login form for users."""
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control', 'id': 'id_email', 'placeholder': 'Email'})
+    )
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'id': 'id_password', 'placeholder': 'Password'})
+    )
 
 class EmployeeRegistrationForm(forms.Form):
     """Form for employee registration with proper employer dropdown."""

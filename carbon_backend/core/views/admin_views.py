@@ -489,7 +489,7 @@ def reports(request):
             
         # Credit statistics
         total_credits = CarbonCredit.objects.aggregate(Sum('amount'))['amount__sum'] or 0
-        redeemed_credits = CarbonCredit.objects.filter(status='redeemed').aggregate(Sum('amount'))['amount__sum'] or 0
+        redeemed_credits = CarbonCredit.objects.filter(status='used').aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Add stats to context
         context.update({
@@ -535,7 +535,7 @@ def export_reports(request):
             
         # Credit statistics
         total_credits = CarbonCredit.objects.aggregate(Sum('amount'))['amount__sum'] or 0
-        redeemed_credits = CarbonCredit.objects.filter(status='redeemed').aggregate(Sum('amount'))['amount__sum'] or 0
+        redeemed_credits = CarbonCredit.objects.filter(status='used').aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Summary data
         data = [

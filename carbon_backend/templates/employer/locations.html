@@ -414,8 +414,8 @@ function initializeMapFunctionality() {
     });
     {% endfor %}
     
-    // Default center (San Francisco)
-    var defaultCenter = { lat: 37.7749, lng: -122.4194 };
+    // Default center (Thane, Maharashtra, India)
+    var defaultCenter = { lat: 19.2183, lng: 72.9781 };
     
     // Initialize the main map
     var map = new google.maps.Map(document.getElementById('locations-map'), {
@@ -571,8 +571,8 @@ function initializeMapFunctionality() {
 function initializeModalMap() {
     console.log("Initializing modal map");
     
-    // Default to New York for the example you searched
-    var defaultLocation = { lat: 40.7128, lng: -74.0060 };
+    // Default to Thane, Maharashtra, India
+    var defaultLocation = { lat: 19.2183, lng: 72.9781 };
     
     // Make sure modal map is visible before initializing
     document.getElementById('modal-map').style.height = '250px';

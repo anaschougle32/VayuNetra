@@ -1,5 +1,6 @@
 from django.urls import path
 from core.views.employee_views import dashboard, trip_log, trips_list, manage_home_location, profile, update_profile, change_password, update_home_location, marketplace
+from core.views.redemption_views import redeem_credits
 
 urlpatterns = [
     path('dashboard/', dashboard, name='employee_dashboard'),
@@ -15,4 +16,7 @@ urlpatterns = [
     
     # Marketplace
     path('marketplace/', marketplace, name='employee_marketplace'),
+    
+    # Credit Redemption
+    path('redeem/', redeem_credits, name='employee_redeem_credits'),
 ] 

@@ -129,7 +129,7 @@ class AdminStatsView(APIView):
         # Carbon credit stats
         total_credits = CarbonCredit.objects.aggregate(Sum('amount'))['amount__sum'] or 0
         active_credits = CarbonCredit.objects.filter(status='active').aggregate(Sum('amount'))['amount__sum'] or 0
-        redeemed_credits = CarbonCredit.objects.filter(status='redeemed').aggregate(Sum('amount'))['amount__sum'] or 0
+        redeemed_credits = CarbonCredit.objects.filter(status='used').aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Marketplace stats
         pending_transactions = MarketplaceTransaction.objects.filter(
@@ -292,7 +292,7 @@ class AdminDashboardView(APIView):
         
         # Carbon credits stats
         total_credits_earned = CarbonCredit.objects.aggregate(Sum('amount'))['amount__sum'] or 0
-        redeemed_credits = CarbonCredit.objects.filter(status='redeemed').aggregate(Sum('amount'))['amount__sum'] or 0
+        redeemed_credits = CarbonCredit.objects.filter(status='used').aggregate(Sum('amount'))['amount__sum'] or 0
         
         # Get recent trips with user details
         limit = int(request.query_params.get('limit', 10))

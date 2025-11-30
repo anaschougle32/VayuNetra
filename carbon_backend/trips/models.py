@@ -85,6 +85,126 @@ class Trip(models.Model):
         blank=True,
         help_text="Estimated travel time in minutes based on transport mode and distance"
     )
+    
+    # Enhanced calculation fields (WRI 2015 + IPCC 2006)
+    ef_baseline = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Baseline emission factor (kg CO₂/km)"
+    )
+    ef_actual = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Actual emission factor (kg CO₂/km)"
+    )
+    emission_difference = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Emission difference (kg CO₂/km)"
+    )
+    time_period = models.CharField(
+        max_length=20,
+        choices=(
+            ('peak_morning', 'Peak Morning (7-10 AM)'),
+            ('peak_evening', 'Peak Evening (6-9 PM)'),
+            ('off_peak', 'Off-Peak'),
+            ('late_night', 'Late Night (11 PM - 5 AM)'),
+        ),
+        default='off_peak',
+        null=True,
+        blank=True
+    )
+    traffic_condition = models.CharField(
+        max_length=20,
+        choices=(
+            ('heavy', 'Heavy'),
+            ('moderate', 'Moderate'),
+            ('light', 'Light'),
+        ),
+        default='moderate',
+        null=True,
+        blank=True
+    )
+    weather_condition = models.CharField(
+        max_length=20,
+        choices=(
+            ('heavy_rain', 'Heavy Rain'),
+            ('light_rain', 'Light Rain'),
+            ('normal', 'Normal'),
+            ('favorable', 'Favorable'),
+        ),
+        default='normal',
+        null=True,
+        blank=True
+    )
+    route_type = models.CharField(
+        max_length=20,
+        choices=(
+            ('hilly', 'Hilly/Uphill'),
+            ('city_center', 'City Center'),
+            ('highway', 'Highway'),
+            ('suburban', 'Suburban'),
+        ),
+        default='suburban',
+        null=True,
+        blank=True
+    )
+    aqi_level = models.CharField(
+        max_length=20,
+        choices=(
+            ('hazardous', 'Hazardous (>300)'),
+            ('very_poor', 'Very Poor (201-300)'),
+            ('moderate', 'Moderate (101-200)'),
+            ('good', 'Good (<100)'),
+        ),
+        default='moderate',
+        null=True,
+        blank=True
+    )
+    season = models.CharField(
+        max_length=20,
+        choices=(
+            ('winter', 'Winter'),
+            ('summer', 'Summer'),
+            ('monsoon', 'Monsoon'),
+            ('post_monsoon', 'Post-Monsoon'),
+        ),
+        default='post_monsoon',
+        null=True,
+        blank=True
+    )
+    time_weight = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Time weight factor"
+    )
+    context_factor = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Context factor (Weather × Route × AQI × Load × Seasonal)"
+    )
+    carbon_credits_earned = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="Carbon credits earned (kg CO₂) - calculated using formula or ML"
+    )
+    calculation_method = models.CharField(
+        max_length=20,
+        choices=(
+            ('formula', 'Formula-based'),
+            ('ml', 'ML Prediction'),
+            ('hybrid', 'Hybrid (ML + Formula)'),
+        ),
+        default='formula',
+        null=True,
+        blank=True
+    )
+    ml_prediction_confidence = models.FloatField(
+        null=True,
+        blank=True,
+        help_text="ML model prediction confidence (0-1)"
+    )
+    
     created_at = models.DateTimeField(default=timezone.now)
     
     def __str__(self):

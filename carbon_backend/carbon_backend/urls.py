@@ -24,6 +24,9 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.views.generic import TemplateView
 from django.shortcuts import redirect, HttpResponseRedirect
 from users.models import EmployerProfile
+from core.views.api_views import get_environment_data
+from core.views.quote_views import quote_page
+from core.views.auth_views import login_view
 
 # API URLs
 api_urlpatterns = [
@@ -99,12 +102,17 @@ urlpatterns = [
     
     # API routes
     path('api/', include(api_urlpatterns)),
+    path('api/environment-data/', get_environment_data, name='api_environment_data'),
+    
+    # Notification routes
+    path('api/notifications/', include('core.notification_urls')),
     
     # Auth routes
-    path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
+    path('login/', login_view, name='login'),
     path('logout/', logout_view, name='logout'),
     path('register/', RegisterView.as_view(), name='register'),
     path('profile/', profile_redirect, name='profile'),
+    path('quote/', quote_page, name='quote_page'),
     path('password_reset/', auth_views.PasswordResetView.as_view(template_name='auth/password_reset.html'), name='password_reset'),
     path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='auth/password_reset_done.html'), name='password_reset_done'),
     path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='auth/password_reset_confirm.html'), name='password_reset_confirm'),

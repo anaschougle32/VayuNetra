@@ -6,6 +6,7 @@ from core.views.employer_views import (
     location_add, location_edit, location_delete, location_set_primary,
     profile, update_profile, change_password, employee_marketplace
 )
+from core.views.employer_redemption_views import redemption_requests, process_redemption
 
 app_name = 'employer'
 
@@ -26,6 +27,8 @@ urlpatterns = [
     path('trips/<int:trip_id>/approve/', trip_approval, name='trip_approval'),
     path('notifications/<int:notification_id>/mark-read/', mark_notification_read, name='mark_notification_read'),
     path('employee-marketplace/', employee_marketplace, name='employee_marketplace'),
+    path('redemption-requests/', redemption_requests, name='redemption_requests'),
+    path('redemption-requests/<int:request_id>/process/', process_redemption, name='process_redemption'),
     
     # Profile
     path('profile/', profile, name='profile'),

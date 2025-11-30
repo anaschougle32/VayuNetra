@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
-from django.db.models import Sum, Avg
+from django.db.models import Sum, Avg, Count
 from django.utils import timezone
 from django.contrib import messages
 from decimal import Decimal
@@ -14,7 +14,9 @@ from users.models import CustomUser
 from django.urls import reverse
 from users.models import EmployeeProfile
 from marketplace.models import MarketOffer, EmployeeCreditOffer
-from datetime import timedelta
+from datetime import timedelta, datetime
+import json
+from core.utils.sustainability_tips import generate_single_sustainability_tip
 
 @login_required
 @user_passes_test(lambda u: u.is_employee)
@@ -40,24 +42,32 @@ def dashboard(request):
         timestamp__gte=week_ago
     ).aggregate(Sum('amount'))['amount__sum'] or 0
     
-    # Get trip statistics
+    # Get trip statistics - use all trips for total count
     total_trips = Trip.objects.filter(employee=employee).count()
     completed_trips = Trip.objects.filter(
         employee=employee, 
         verification_status='verified'
     ).count()
     
-    # Calculate total distance traveled
+    # Calculate total distance traveled (from verified trips only)
     total_distance = Trip.objects.filter(
         employee=employee,
         verification_status='verified'
     ).aggregate(Sum('distance_km'))['distance_km__sum'] or 0
     
-    # Calculate CO2 saved
+    # Calculate CO2 saved (from verified trips only)
     co2_saved = Trip.objects.filter(
         employee=employee,
         verification_status='verified'
     ).aggregate(Sum('carbon_savings'))['carbon_savings__sum'] or 0
+    
+    # Calculate total credits earned (from all active credits, not just verified trips)
+    # This should match the total_credits calculated above
+    total_credits_earned = CarbonCredit.objects.filter(
+        owner_type='employee',
+        owner_id=employee.id,
+        status='active'
+    ).aggregate(Sum('amount'))['amount__sum'] or 0
     
     # Calculate streak (consecutive days with verified trips)
     # For simplicity, we'll just count consecutive days with trips
@@ -82,6 +92,103 @@ def dashboard(request):
     # Tree equivalent (rough estimate)
     tree_equivalent = int(co2_saved / 21) if co2_saved else 0  # 1 tree absorbs ~21kg CO2 per year
     
+    # Get chart data for activity graphs
+    
+    # Weekly credits data (last 7 days)
+    weekly_credits_data = []
+    weekly_labels = []
+    today = timezone.now().date()
+    
+    for i in range(6, -1, -1):  # Last 7 days
+        date = today - timedelta(days=i)
+        day_name = date.strftime('%a')  # Mon, Tue, etc.
+        weekly_labels.append(day_name)
+        
+        # Get credits earned on this day
+        day_start = timezone.make_aware(datetime.combine(date, datetime.min.time()))
+        day_end = day_start + timedelta(days=1)
+        
+        day_credits = CarbonCredit.objects.filter(
+            owner_type='employee',
+            owner_id=employee.id,
+            status='active',
+            timestamp__gte=day_start,
+            timestamp__lt=day_end
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        weekly_credits_data.append(float(day_credits))
+    
+    # Monthly credits data (last 4 weeks)
+    monthly_credits_data = []
+    monthly_labels = []
+    
+    for i in range(3, -1, -1):  # Last 4 weeks
+        week_start = today - timedelta(days=(i * 7) + 6)
+        week_end = week_start + timedelta(days=7)
+        monthly_labels.append(f"Week {4-i}")
+        
+        week_start_dt = timezone.make_aware(datetime.combine(week_start, datetime.min.time()))
+        week_end_dt = timezone.make_aware(datetime.combine(week_end, datetime.min.time()))
+        
+        week_credits = CarbonCredit.objects.filter(
+            owner_type='employee',
+            owner_id=employee.id,
+            status='active',
+            timestamp__gte=week_start_dt,
+            timestamp__lt=week_end_dt
+        ).aggregate(Sum('amount'))['amount__sum'] or 0
+        
+        monthly_credits_data.append(float(week_credits))
+    
+    # Transport modes data (from verified trips)
+    transport_mode_counts = Trip.objects.filter(
+        employee=employee,
+        verification_status='verified'
+    ).values('transport_mode').annotate(count=Count('id')).order_by('-count')
+    
+    transport_labels = []
+    transport_data = []
+    transport_colors = {
+        'bicycle': '#55A630',
+        'walking': '#1E88E5',
+        'public_transport': '#70A9A1',
+        'carpool': '#F9DC5C',
+        'car': '#9DACFF',
+        'work_from_home': '#FF6B6B'
+    }
+    
+    total_verified_trips = Trip.objects.filter(
+        employee=employee,
+        verification_status='verified'
+    ).count()
+    
+    for mode_data in transport_mode_counts:
+        mode = mode_data['transport_mode']
+        count = mode_data['count']
+        percentage = (count / total_verified_trips * 100) if total_verified_trips > 0 else 0
+        
+        # Format mode name
+        mode_name = mode.replace('_', ' ').title()
+        if mode == 'public_transport':
+            mode_name = 'Public Transport'
+        elif mode == 'work_from_home':
+            mode_name = 'Work from Home'
+        
+        transport_labels.append(mode_name)
+        transport_data.append(round(percentage, 1))
+    
+    # If no trips, add default data
+    if not transport_data:
+        transport_labels = ['No trips yet']
+        transport_data = [100]
+    
+    # Get personalized sustainability tip (single tip)
+    try:
+        sustainability_tip = generate_single_sustainability_tip(request.user)
+    except Exception as e:
+        # Fallback to default tip if generation fails
+        sustainability_tip = "Consider using public transportation or carpooling to reduce your carbon footprint and earn more carbon credits."
+    
     context = {
         'page_title': 'Employee Dashboard',
         'employee': employee,
@@ -96,7 +203,15 @@ def dashboard(request):
         'recent_trips': recent_trips,
         'pending_trips': pending_trips,
         'tree_equivalent': tree_equivalent,
-        'wallet_balance': employee.wallet_balance
+        'wallet_balance': employee.wallet_balance,
+        # Chart data (as lists for json_script filter)
+        'weekly_credits_data': weekly_credits_data,
+        'weekly_labels': weekly_labels,
+        'monthly_credits_data': monthly_credits_data,
+        'monthly_labels': monthly_labels,
+        'transport_labels': transport_labels,
+        'transport_data': transport_data,
+        'sustainability_tip': sustainability_tip,
     }
     
     return render(request, 'employee/dashboard.html', context)
@@ -161,10 +276,10 @@ def trip_log(request):
     
     # If user doesn't have a home location, create a default one automatically
     if not home_location:
-        # Create a default home location with the exact Boca Raton coordinates
-        default_address = "Boca Raton, Florida, USA"
-        default_lat = 26.351915  # Exact Boca Raton latitude
-        default_lng = -80.138568  # Exact Boca Raton longitude
+        # Create a default home location with Thane, Maharashtra, India coordinates
+        default_address = "Thane, Maharashtra, India"
+        default_lat = 19.2183  # Thane latitude
+        default_lng = 72.9781  # Thane longitude
         
         home_location = Location.objects.create(
             created_by=request.user,
@@ -172,11 +287,11 @@ def trip_log(request):
             address=default_address,
             latitude=default_lat,
             longitude=default_lng,
-            name=f"Home - Boca Raton",
+            name=f"Home - Thane",
             is_primary=True
         )
         
-        messages.info(request, "A default home location in Boca Raton has been created for you. You can update it in your profile settings.")
+        messages.info(request, "A default home location in Thane, Maharashtra, India has been created for you. You can update it in your profile settings.")
     
     has_home_location = True  # We now always have a home location
     
@@ -185,11 +300,11 @@ def trip_log(request):
     if employee.employer:
         employer_locations = employee.employer.office_locations.all()
         
-        # If employer has no office locations, create a default one for Florida Atlantic University
+        # If employer has no office locations, create a default one in Thane
         if not employer_locations.exists():
-            default_office_address = "Florida Atlantic University, 777 Glades Rd, Boca Raton, FL 33431, USA"
-            default_office_lat = 26.368322  # Exact FAU latitude
-            default_office_lng = -80.097404  # Exact FAU longitude
+            default_office_address = "Thane East, Maharashtra, India"
+            default_office_lat = 19.2300  # Thane East latitude
+            default_office_lng = 72.9900  # Thane East longitude
             
             # Create default office location
             office_location = Location.objects.create(
@@ -198,7 +313,7 @@ def trip_log(request):
                 address=default_office_address,
                 latitude=default_office_lat,
                 longitude=default_office_lng,
-                name="Office - Florida Atlantic University",
+                name="Office - Thane East",
                 is_primary=True,
                 employer=employee.employer
             )
@@ -206,10 +321,14 @@ def trip_log(request):
             # Refresh the employer locations
             employer_locations = employee.employer.office_locations.all()
             
-            messages.info(request, "A default office location at Florida Atlantic University has been added for your employer.")
+            messages.info(request, "A default office location in Thane East has been added for your employer.")
     
     # Get today's date for the form
     today = timezone.now()
+    
+    # Get Google Maps API key
+    from django.conf import settings
+    google_maps_api_key = getattr(settings, 'GOOGLE_MAPS_API_KEY', '')
     
     context = {
         'page_title': 'Log a Trip',
@@ -217,6 +336,7 @@ def trip_log(request):
         'today': today,
         'has_home_location': has_home_location,
         'home_location': home_location,
+        'google_maps_api_key': google_maps_api_key
     }
     
     return render(request, 'employee/trip_log.html', context)
@@ -375,10 +495,14 @@ def manage_home_location(request):
     
     has_home_location = home_location is not None
     
+    # Get Google Maps API key
+    google_maps_api_key = settings.GOOGLE_MAPS_API_KEY
+    
     context = {
         'page_title': 'Manage Home Location',
         'home_location': home_location,
         'has_home_location': has_home_location,
+        'google_maps_api_key': google_maps_api_key,
     }
     
     return render(request, 'employee/manage_home_location.html', context)
@@ -419,7 +543,7 @@ def profile(request):
         redeemed_credits = CarbonCredit.objects.filter(
             owner_type='employee',
             owner_id=employee_profile.id,
-            status='redeemed'
+            status='used'
         ).aggregate(Sum('amount'))['amount__sum'] or 0
         
         # CO2 saved

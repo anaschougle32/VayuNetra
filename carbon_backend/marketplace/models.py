@@ -114,6 +114,7 @@ class EmployeeCreditOffer(models.Model):
     OFFER_TYPE = (
         ('buy', 'Buy Credits'),
         ('sell', 'Sell Credits'),
+        ('redeem', 'Redeem Credits'),
     )
     
     employee = models.ForeignKey(
@@ -126,11 +127,12 @@ class EmployeeCreditOffer(models.Model):
         on_delete=models.CASCADE,
         related_name='employee_credit_offers'
     )
-    offer_type = models.CharField(max_length=4, choices=OFFER_TYPE)
+    offer_type = models.CharField(max_length=10, choices=OFFER_TYPE)
     credit_amount = models.DecimalField(max_digits=10, decimal_places=2)
     market_rate = models.DecimalField(max_digits=10, decimal_places=2, help_text="Current market rate when offer was created")
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, help_text="Total dollar amount of the transaction")
     status = models.CharField(max_length=10, choices=OFFER_STATUS, default='pending')
+    additional_info = models.TextField(blank=True, null=True, help_text="Additional information for redemption requests")
     created_at = models.DateTimeField(default=timezone.now)
     processed_at = models.DateTimeField(null=True, blank=True)
     

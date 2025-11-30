@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Employee Dashboard - Carbon Credits Platform{% endblock %}
+{% block title %}Employee Dashboard - VayuNetra{% endblock %}
 
 {% block extra_css %}
 <style>
@@ -74,6 +74,23 @@
     <!-- Stats Overview -->
     <div class="mb-10">
         <h2 class="text-2xl font-semibold text-gray-800 mb-6">My Carbon Impact</h2>
+        
+        <!-- Single Sustainability Tip -->
+        {% if sustainability_tip %}
+        <div class="modern-card p-5 mb-6 bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400 shadow-lg">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <span class="text-4xl">🌱</span>
+                </div>
+                <div class="ml-4 flex-1">
+                    <h3 class="text-lg font-bold text-green-800 mb-2">Sustainability Tip</h3>
+                    <p class="text-base font-semibold text-gray-900 leading-relaxed">
+                        {{ sustainability_tip }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="modern-card p-6 stat-card">
                 <div class="flex items-start">
@@ -86,7 +103,7 @@
                         <h3 class="text-lg font-medium text-gray-500">Total Credits</h3>
                         <p class="text-3xl font-bold text-gray-800">{{ total_credits|floatformat:2 }}</p>
                         <div class="text-sm text-gray-500 mt-1">
-                            <span class="text-green-600 font-medium">+{{ recent_credits|floatformat:2 }}</span> in last 7 days
+                            <span class="text-green-600 font-medium">+{{ credits_last_week|floatformat:2 }}</span> in last 7 days
                         </div>
                     </div>
                 </div>
@@ -211,15 +228,15 @@
                         </div>
                     </a>
                     
-                    <a href="{% url 'employee_trips' %}" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
+                    <a href="{% url 'employee_redeem_credits' %}" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
                         <div class="p-2 rounded-full bg-purple-100 text-purple-600">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="ml-4">
-                            <p class="text-lg font-medium text-gray-900">Carbon Credits</p>
-                            <span class="text-sm text-gray-500">View your earned credits</span>
+                            <p class="text-lg font-medium text-gray-900">Redeem Credits</p>
+                            <span class="text-sm text-gray-500">Convert credits to cash, coupons, or vouchers</span>
                         </div>
                     </a>
                 </div>
@@ -292,23 +309,37 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ trip.distance|floatformat:1 }} km
+                                {% if trip.distance_km %}
+                                    {{ trip.distance_km|floatformat:1 }} km
+                                {% else %}
+                                    N/A
+                                {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ trip.carbon_credits|floatformat:2 }}
+                                {% if trip.credits_earned %}
+                                    {{ trip.credits_earned|floatformat:2 }}
+                                {% elif trip.carbon_credits_earned %}
+                                    {{ trip.carbon_credits_earned|floatformat:2 }}
+                                {% else %}
+                                    0.00
+                                {% endif %}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                {% if trip.is_verified %}
+                                {% if trip.verification_status == 'verified' %}
                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
                                     Verified
                                 </span>
-                                {% elif trip.end_time %}
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    Pending
+                                {% elif trip.verification_status == 'rejected' %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                    Rejected
+                                </span>
+                                {% elif trip.verification_status == 'flagged' %}
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
+                                    Flagged
                                 </span>
                                 {% else %}
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                    In Progress
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                    Pending
                                 </span>
                                 {% endif %}
                             </td>
@@ -336,6 +367,14 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Store chart data in JSON script tags for safe access -->
+{{ weekly_labels|json_script:"weekly_labels" }}
+{{ weekly_credits_data|json_script:"weekly_credits_data" }}
+{{ monthly_labels|json_script:"monthly_labels" }}
+{{ monthly_credits_data|json_script:"monthly_credits_data" }}
+{{ transport_labels|json_script:"transport_labels" }}
+{{ transport_data|json_script:"transport_data" }}
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize charts
@@ -356,15 +395,23 @@
         });
         
         function initializeCharts() {
+            // Get real data from Django template using json_script
+            const weeklyLabels = JSON.parse(document.getElementById('weekly_labels').textContent);
+            const weeklyCreditsData = JSON.parse(document.getElementById('weekly_credits_data').textContent);
+            const monthlyLabels = JSON.parse(document.getElementById('monthly_labels').textContent);
+            const monthlyCreditsData = JSON.parse(document.getElementById('monthly_credits_data').textContent);
+            const transportLabels = JSON.parse(document.getElementById('transport_labels').textContent);
+            const transportData = JSON.parse(document.getElementById('transport_data').textContent);
+            
             // Credits Earned Chart
             const creditsCtx = document.getElementById('creditsEarnedChart').getContext('2d');
             window.creditsChart = new Chart(creditsCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    labels: weeklyLabels,
                     datasets: [{
                         label: 'Credits Earned',
-                        data: [2.5, 3.8, 0, 4.2, 2.1, 1.5, 3.2],
+                        data: weeklyCreditsData,
                         backgroundColor: 'rgba(43, 147, 72, 0.2)',
                         borderColor: '#2B9348',
                         borderWidth: 2,
@@ -412,19 +459,29 @@
             
             // Transport Modes Chart
             const transportCtx = document.getElementById('transportModesChart').getContext('2d');
+            
+            // Color mapping for transport modes
+            const transportColors = {
+                'Bicycle': '#55A630',
+                'Walking': '#1E88E5',
+                'Public Transport': '#70A9A1',
+                'Carpool': '#F9DC5C',
+                'Car': '#9DACFF',
+                'Work From Home': '#FF6B6B',
+                'No trips yet': '#CCCCCC'
+            };
+            
+            const transportBackgroundColors = transportLabels.map(label => {
+                return transportColors[label] || '#9DACFF';
+            });
+            
             window.transportChart = new Chart(transportCtx, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Bicycle', 'Walking', 'Public Transport', 'Carpool', 'Other'],
+                    labels: transportLabels,
                     datasets: [{
-                        data: [45, 25, 15, 10, 5],
-                        backgroundColor: [
-                            '#55A630', // green
-                            '#1E88E5', // blue
-                            '#70A9A1', // teal
-                            '#F9DC5C', // yellow
-                            '#9DACFF'  // lavender
-                        ],
+                        data: transportData,
+                        backgroundColor: transportBackgroundColors,
                         borderWidth: 0,
                         hoverOffset: 4
                     }]
@@ -460,16 +517,21 @@
         }
         
         function updateCharts(period) {
-            // Simple mock data for different periods
+            // Get real data from Django template using json_script
+            const weeklyLabels = JSON.parse(document.getElementById('weekly_labels').textContent);
+            const weeklyCreditsData = JSON.parse(document.getElementById('weekly_credits_data').textContent);
+            const monthlyLabels = JSON.parse(document.getElementById('monthly_labels').textContent);
+            const monthlyCreditsData = JSON.parse(document.getElementById('monthly_credits_data').textContent);
+            
             let creditsData;
             let labels;
             
             if (period === 'weekly') {
-                labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                creditsData = [2.5, 3.8, 0, 4.2, 2.1, 1.5, 3.2];
+                labels = weeklyLabels;
+                creditsData = weeklyCreditsData;
             } else if (period === 'monthly') {
-                labels = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
-                creditsData = [12.5, 14.2, 10.8, 8.7];
+                labels = monthlyLabels;
+                creditsData = monthlyCreditsData;
             }
             
             // Update credits chart
@@ -477,17 +539,7 @@
             window.creditsChart.data.datasets[0].data = creditsData;
             window.creditsChart.update();
             
-            // Also update transport chart with random data just for demo purposes
-            const transportData = [
-                Math.floor(Math.random() * 30) + 20,
-                Math.floor(Math.random() * 20) + 15,
-                Math.floor(Math.random() * 20) + 10,
-                Math.floor(Math.random() * 15) + 10,
-                Math.floor(Math.random() * 10) + 5
-            ];
-            
-            window.transportChart.data.datasets[0].data = transportData;
-            window.transportChart.update();
+            // Transport chart data doesn't change with period, it's already set with real data
         }
     });
 </script>

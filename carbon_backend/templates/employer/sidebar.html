@@ -41,6 +41,12 @@
                 </a>
             </li>
             <li class="nav-item">
+                <a class="nav-link {% if request.path == '/employer/redemption-requests/' %}active{% endif %}" href="{% url 'employer:redemption_requests' %}">
+                    <i class="bi bi-wallet2 me-2"></i>
+                    Redemption Requests
+                </a>
+            </li>
+            <li class="nav-item">
                 <a class="nav-link {% if request.path == '/employer/profile/' %}active{% endif %}" href="{% url 'employer:profile' %}">
                     <i class="bi bi-person-circle me-2"></i>
                     Profile
