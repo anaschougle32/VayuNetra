@@ -26,8 +26,8 @@ urlpatterns = [
     # Enhanced NLP
     path('nlp/', include('core.enhanced_nlp_urls', namespace='enhanced_nlp')),
     
-    # Predictive Analytics
-    path('analytics/', include('core.predictive_analytics_urls', namespace='predictive_analytics')),
+    # Predictive Analytics - Lazy load to avoid memory issues
+    # path('analytics/', include('core.predictive_analytics_urls', namespace='predictive_analytics')),
     
     # Gamification
     path('gamification/', include('core.gamification_urls', namespace='gamification')),
