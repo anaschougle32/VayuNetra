@@ -1,0 +1,290 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.badge-category {
+    margin-bottom: 2rem;
+}
+
+.category-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #e5e7eb;
+}
+
+.badge-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.badge-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+}
+
+.badge-earned {
+    border-color: #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.badge-progress {
+    border-color: #f59e0b;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.badge-locked {
+    border-color: #d1d5db;
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    opacity: 0.7;
+}
+
+.badge-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.badge-icon {
+    font-size: 3rem;
+    margin-right: 1rem;
+}
+
+.badge-info {
+    flex: 1;
+}
+
+.badge-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 0.25rem;
+}
+
+.badge-description {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+}
+
+.badge-progress {
+    margin-top: 0.75rem;
+}
+
+.progress-bar {
+    background: #e5e7eb;
+    border-radius: 9999px;
+    height: 8px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    transition: width 0.6s ease;
+}
+
+.badge-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.badge-tier {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.tier-bronze { background: #fef3c7; color: #92400e; }
+.tier-silver { background: #f3f4f6; color: #6b7280; }
+.tier-gold { background: #fef3c7; color: #d97706; }
+.tier-platinum { background: #f3f4f6; color: #1e40af; }
+.tier-special { background: #fef3c7; color: #7c3aed; }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}
+
+.empty-state-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-6 mb-8">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <span class="text-4xl">🏆</span>
+            </div>
+            <div class="ml-4">
+                <h1 class="text-3xl font-bold text-gray-800">My Badges</h1>
+                <p class="text-gray-600">Track your achievements and progress towards new badges</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-3xl mb-2">🏅</div>
+            <div class="text-2xl font-bold text-gray-800">{{ earned_badges|length }}</div>
+            <div class="text-sm text-gray-500">Badges Earned</div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-3xl mb-2">📈</div>
+            <div class="text-2xl font-bold text-gray-800">{{ badge_progress|length }}</div>
+            <div class="text-sm text-gray-500">In Progress</div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-md p-6 text-center">
+            <div class="text-3xl mb-2">🎯</div>
+            <div class="text-2xl font-bold text-gray-800">{{ badges_by_category|length }}</div>
+            <div class="text-sm text-gray-500">Categories</div>
+        </div>
+    </div>
+
+    <!-- Earned Badges -->
+    {% if earned_badges %}
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Earned Badges</h2>
+            <div class="badge-grid">
+                {% for user_badge in earned_badges %}
+                <div class="badge-item badge-earned">
+                    <div class="badge-header">
+                        <div class="badge-icon">{{ user_badge.badge.icon }}</div>
+                        <div class="badge-info">
+                            <h3 class="badge-name">{{ user_badge.badge.name }}</h3>
+                            <p class="badge-description">{{ user_badge.badge.description }}</p>
+                        </div>
+                        <div class="badge-tier tier-{{ user_badge.badge.badge_type }}">
+                            {{ user_badge.badge.get_badge_type_display }}
+                        </div>
+                    </div>
+                    <div class="badge-stats">
+                        <span>Earned {{ user_badge.earned_at|timesince }} ago</span>
+                        <span>{{ user_badge.progress_value }}/{{ user_badge.badge.condition_value }}</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Badge Progress -->
+    {% if badge_progress %}
+        <div class="mb-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">In Progress</h2>
+            <div class="badge-grid">
+                {% for progress in badge_progress %}
+                <div class="badge-item badge-progress">
+                    <div class="badge-header">
+                        <div class="badge-icon">{{ progress.badge.icon }}</div>
+                        <div class="badge-info">
+                            <h3 class="badge-name">{{ progress.badge.name }}</h3>
+                            <p class="badge-description">{{ progress.badge.description }}</p>
+                        </div>
+                        <div class="badge-tier tier-{{ progress.badge.badge_type }}">
+                            {{ progress.badge.get_badge_type_display }}
+                        </div>
+                    </div>
+                    <div class="badge-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" data-progress="{{ progress.percentage }}"></div>
+                        </div>
+                        <div class="badge-stats">
+                            <span>{{ progress.current_value }}/{{ progress.target_value }}</span>
+                            <span>{{ progress.percentage|floatformat:0 }}%</span>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- All Available Badges by Category -->
+    <div>
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6">All Available Badges</h2>
+        
+        {% for category, badges in badges_by_category.items %}
+        <div class="badge-category">
+            <h3 class="category-title">{{ category }}</h3>
+            <div class="badge-grid">
+                {% for badge in badges %}
+                <div class="badge-item {% if badge.id in earned_badge_ids %}badge-earned{% elif badge.id in progress_badge_ids %}badge-progress{% else %}badge-locked{% endif %}">
+                    <div class="badge-header">
+                        <div class="badge-icon">{{ badge.icon }}</div>
+                        <div class="badge-info">
+                            <h3 class="badge-name">{{ badge.name }}</h3>
+                            <p class="badge-description">{{ badge.description }}</p>
+                        </div>
+                        <div class="badge-tier tier-{{ badge.badge_type }}">
+                            {{ badge.get_badge_type_display }}
+                        </div>
+                    </div>
+                    <div class="badge-stats">
+                        <span>{{ badge.condition_value }} {{ badge.get_condition_type_display|lower }}</span>
+                        <span>+{{ badge.points }} points</span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Empty State -->
+    {% if not earned_badges and not badge_progress %}
+        <div class="empty-state">
+            <div class="empty-state-icon">🏆</div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-2">No Badges Yet</h3>
+            <p class="text-gray-600">Start logging sustainable trips to earn your first badge!</p>
+            <a href="{% url 'employee_trip_log' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                Log Your First Trip
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set progress bar widths from data attributes
+    document.querySelectorAll('.progress-fill').forEach(function(bar) {
+        const progress = bar.getAttribute('data-progress');
+        if (progress) {
+            bar.style.width = progress + '%';
+        }
+    });
+});
+</script>
+{% endblock %}

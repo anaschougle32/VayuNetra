@@ -128,6 +128,7 @@ urlpatterns = [
     path('bank/', include('core.bank_urls')),
     path('employer/', include('core.employer_urls')),
     path('employee/', include('core.employee_urls')),
+    path('', include('core.urls')),  # Core functionality URLs
 ]
 
 # Serve static and media files in development

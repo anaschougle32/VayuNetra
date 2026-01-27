@@ -61,6 +61,27 @@ def dashboard(request):
         verification_status='verified'
     ).aggregate(Sum('carbon_savings'))['carbon_savings__sum'] or 0
     
+    # Calculate CO2 emitted (baseline emissions if no eco-friendly trips were taken)
+    # Sum of baseline emissions for all trips
+    co2_emitted = Trip.objects.filter(
+        employee=employee,
+        verification_status='verified'
+    ).aggregate(Sum('ef_baseline'))['ef_baseline__sum'] or 0
+    if co2_emitted:
+        # Multiply by distance to get total baseline emissions
+        total_distance = Trip.objects.filter(
+            employee=employee,
+            verification_status='verified'
+        ).aggregate(Sum('distance_km'))['distance_km__sum'] or 0
+        # Convert to float to avoid Decimal/float division error
+        co2_emitted = float(co2_emitted)
+        total_distance = float(total_distance)
+        # Average baseline emission factor per km
+        avg_baseline_per_km = co2_emitted / total_distance if total_distance > 0 else 0
+        co2_emitted = avg_baseline_per_km * total_distance
+    else:
+        co2_emitted = 0
+    
     # Calculate total credits earned (from all active credits, not just verified trips)
     # This should match the total_credits calculated above
     total_credits_earned = CarbonCredit.objects.filter(
@@ -189,6 +210,42 @@ def dashboard(request):
         # Fallback to default tip if generation fails
         sustainability_tip = "Consider using public transportation or carpooling to reduce your carbon footprint and earn more carbon credits."
     
+    # Get user's gamification data
+    from core.gamification_models import UserBadge, UserProgress, UserPoints, Streak
+    
+    # User badges earned
+    user_badges = UserBadge.objects.filter(user=request.user).select_related('badge')
+    total_badges = user_badges.count()
+    recent_badges = user_badges.order_by('-earned_at')[:3]
+    
+    # User progress
+    user_progress = UserProgress.objects.filter(user=request.user, is_completed=True).count()
+    active_progress = UserProgress.objects.filter(user=request.user, is_completed=False).order_by('-start_date')[:3]
+    
+    # User points and streak
+    user_points = UserPoints.objects.filter(user=request.user).aggregate(
+        total_points=Sum('points'),
+        points_this_week=Sum('points', filter=Q(created_at__gte=week_ago))
+    )
+    total_points = user_points['total_points'] or 0
+    points_this_week = user_points['points_this_week'] or 0
+    
+    # Current streak
+    current_streak = Streak.objects.filter(
+        user=request.user, 
+        streak_type='daily_trips',
+        is_active=True
+    ).first()
+    current_streak_days = current_streak.current_streak if current_streak else 0
+    
+    # Get user's pollution alerts
+    from core.pollution_models import UserPollutionAlert
+    pollution_alerts = UserPollutionAlert.objects.filter(
+        user=request.user,
+        is_read=False
+    ).order_by('-created_at')[:3]
+    total_alerts = pollution_alerts.count()
+    
     context = {
         'page_title': 'Employee Dashboard',
         'employee': employee,
@@ -198,7 +255,8 @@ def dashboard(request):
         'completed_trips': completed_trips,
         'total_distance': total_distance,
         'co2_saved': co2_saved,
-        'streak': streak,
+        'co2_emitted': co2_emitted,
+        'current_streak': current_streak_days,
         'best_streak': best_streak,
         'recent_trips': recent_trips,
         'pending_trips': pending_trips,
@@ -212,6 +270,16 @@ def dashboard(request):
         'transport_labels': transport_labels,
         'transport_data': transport_data,
         'sustainability_tip': sustainability_tip,
+        # Gamification data
+        'total_badges': total_badges,
+        'recent_badges': recent_badges,
+        'user_progress': user_progress,
+        'active_progress': active_progress,
+        'total_points': total_points,
+        'points_this_week': points_this_week,
+        # Pollution data
+        'pollution_alerts': pollution_alerts,
+        'total_alerts': total_alerts,
     }
     
     return render(request, 'employee/dashboard.html', context)

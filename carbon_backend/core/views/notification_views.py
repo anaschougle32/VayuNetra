@@ -82,6 +82,39 @@ def mark_notification_read(request, notification_id):
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
 
+
+@login_required
+@require_http_methods(["POST"])
+def log_social_engagement(request):
+    """
+    Log social engagement actions for awareness & motivation.
+    """
+    try:
+        payload = json.loads(request.body or '{}')
+        action = payload.get('action', 'activity')
+        context = payload.get('context', '')
+        link = payload.get('link') or ''
+
+        title_map = {
+            'share_impact': 'Impact Shared',
+            'join_challenge': 'Community Challenge',
+            'view_leaderboard': 'Leaderboard Viewed',
+            'accept_tip': 'Sustainability Tip',
+            'invite_friend': 'Invite Sent'
+        }
+
+        Notification.objects.create(
+            user=request.user,
+            notification_type='info',
+            title=title_map.get(action, 'Community Activity'),
+            message=context or 'Thanks for supporting the community goals!',
+            link=link
+        )
+
+        return JsonResponse({'success': True})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def delete_notification(request, notification_id):

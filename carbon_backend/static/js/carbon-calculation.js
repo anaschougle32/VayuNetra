@@ -9,6 +9,8 @@
 const EMISSION_FACTORS = {
     'car': { baseline: 0.130, actual: 0.130 },
     'carpool': { baseline: 0.130, actual: 0.071 },
+    'two_wheeler_single': { baseline: 0.130, actual: 0.029 },
+    'two_wheeler_double': { baseline: 0.130, actual: 0.0145 },
     'public_transport': { baseline: 0.130, actual: 0.015161 },
     'bicycle': { baseline: 0.120, actual: 0.000 },
     'walking': { baseline: 0.150, actual: 0.000 },
@@ -116,12 +118,13 @@ function calculateTimeWeight(timePeriod, trafficCondition) {
 /**
  * Calculate context factor: Weather × Route × AQI × Seasonal
  */
-function calculateContextFactor(weather, routeType, aqiLevel, season) {
+function calculateContextFactor(weather, routeType, aqiLevel, season, mode) {
     const weatherFactor = WEATHER_FACTORS[weather] || 1.0;
     const routeFactor = ROUTE_FACTORS[routeType] || 1.0;
     const aqiFactor = AQI_FACTORS[aqiLevel] || 1.0;
     const seasonalFactor = SEASONAL_FACTORS[season] || 1.0;
-    return weatherFactor * routeFactor * aqiFactor * seasonalFactor;
+    const loadFactor = mode === 'two_wheeler_double' ? 1.02 : (mode === 'two_wheeler_single' ? 0.95 : 1.0);
+    return weatherFactor * routeFactor * aqiFactor * seasonalFactor * loadFactor;
 }
 
 /**
@@ -136,7 +139,7 @@ function calculateCredits(mode, distance, timePeriod, trafficCondition, weather,
     const factors = EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
     const emissionDiff = factors.baseline - factors.actual;
     const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
-    const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season);
+    const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
     
     const credits = emissionDiff * distance * timeWeight * contextFactor;
     return Math.max(0, credits);
@@ -176,7 +179,7 @@ function updateCreditPreview() {
     const factors = EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
     const emissionDiff = factors.baseline - factors.actual;
     const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
-    const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season);
+    const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
     const credits = calculateCredits(mode, distance, timePeriod, trafficCondition, weather, routeType, aqiLevel, season);
     
     // Update preview

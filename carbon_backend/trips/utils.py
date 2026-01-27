@@ -90,6 +90,8 @@ def calculate_carbon_savings(distance_km, transport_mode):
     carbon_factors = {
         'car': 0.12,               # kg CO2 per km (baseline)
         'carpool': 0.07,           # kg CO2 per km (assumes ~2 people)
+        'two_wheeler_single': 0.029,  # kg CO2 per km (solo)
+        'two_wheeler_double': 0.0145, # kg CO2 per km per person (2 riders)
         'public_transport': 0.03,  # kg CO2 per km (average for buses/trains)
         'bicycle': 0,              # No emissions
         'walking': 0,              # No emissions

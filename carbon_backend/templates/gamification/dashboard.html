@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+.gamification-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.badge-card {
+    background: white;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s;
+}
+
+.badge-card:hover {
+    transform: translateY(-2px);
+}
+
+.badge-earned {
+    border: 2px solid #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+}
+
+.badge-progress {
+    border: 2px solid #f59e0b;
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+}
+
+.progress-bar-container {
+    background: #e5e7eb;
+    border-radius: 10px;
+    height: 8px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+    transition: width 0.3s ease;
+}
+
+.streak-indicator {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 8px 16px;
+    font-weight: bold;
+    display: inline-block;
+}
+
+.points-display {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 20px;
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+.challenge-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-left: 4px solid #3b82f6;
+}
+
+.leaderboard-rank {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.rank-1 { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+.rank-2 { background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 100%); }
+.rank-3 { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">Gamification Dashboard</h1>
+        <p class="text-gray-600">Track your achievements, compete with others, and reach your sustainability goals!</p>
+    </div>
+
+    <!-- Quick Navigation -->
+    <div class="flex flex-wrap gap-4 mb-8">
+        <a href="{% url 'gamification:leaderboards' %}" class="inline-flex items-center px-5 py-2.5 rounded-lg bg-blue-600 text-white font-semibold shadow-sm hover:bg-blue-700 transition">
+            🏆 View Leaderboards
+        </a>
+        <a href="{% url 'gamification:progress' %}" class="inline-flex items-center px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold shadow-sm hover:bg-emerald-700 transition">
+            📈 View Progress
+        </a>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="points-display">
+            <div class="text-3xl mb-2">⭐</div>
+            <div>{{ total_points }}</div>
+            <div class="text-sm opacity-80">Total Points</div>
+        </div>
+
+        <div class="gamification-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-1">Badges Earned</h3>
+                    <p class="text-2xl font-bold">{{ user_badges|length }}</p>
+                </div>
+                <div class="text-4xl opacity-50">🏆</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-1">Weekly Rank</h3>
+                    <p class="text-2xl font-bold">
+                        {% if weekly_carbon_rank %}#{{ weekly_carbon_rank }}{% else %}--{% endif %}
+                    </p>
+                </div>
+                <div class="text-4xl opacity-50">🥇</div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold mb-1">Active Streaks</h3>
+                    <p class="text-2xl font-bold">{{ user_streaks|length }}</p>
+                </div>
+                <div class="text-4xl opacity-50">🔥</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Recent Badges -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Recent Achievements</h2>
+                    <a href="{% url 'gamification:badges' %}" class="text-blue-500 hover:text-blue-600">View All →</a>
+                </div>
+                
+                {% if user_badges %}
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {% for user_badge in user_badges %}
+                            <div class="badge-card badge-earned">
+                                <div class="text-4xl mb-2">{{ user_badge.badge.icon }}</div>
+                                <h4 class="font-semibold text-sm">{{ user_badge.badge.name }}</h4>
+                                <p class="text-xs text-gray-600 mt-1">{{ user_badge.badge.get_badge_type_display }}</p>
+                                <p class="text-xs text-gray-500 mt-2">{{ user_badge.earned_at|timesince }} ago</p>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-gray-500">Start logging sustainable trips to earn your first badge!</p>
+                {% endif %}
+            </div>
+
+            <!-- Badge Progress -->
+            {% if badge_progress %}
+                <div class="bg-white rounded-lg shadow-md p-6 mt-6">
+                    <h2 class="text-xl font-semibold mb-4">In Progress</h2>
+                    <div class="space-y-4">
+                        {% for progress in badge_progress|slice:":5" %}
+                            <div class="flex items-center justify-between p-3 border rounded-lg">
+                                <div class="flex items-center">
+                                    <div class="text-2xl mr-3">{{ progress.badge.icon }}</div>
+                                    <div>
+                                        <h4 class="font-medium">{{ progress.badge.name }}</h4>
+                                        <p class="text-sm text-gray-600">{{ progress.current_value }}/{{ progress.target_value }}</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="progress-bar-container w-24">
+                                        <div class="progress-bar-fill" data-progress="{{ progress.percentage }}"></div>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">{{ progress.percentage|floatformat:0 }}%</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Side Panel -->
+        <div class="space-y-6">
+            <!-- Active Streaks -->
+            {% if user_streaks %}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Active Streaks</h2>
+                    <div class="space-y-3">
+                        {% for streak in user_streaks %}
+                            {% if streak.is_active %}
+                                <div class="text-center">
+                                    <div class="streak-indicator mb-2">
+                                        🔥 {{ streak.current_streak }} days
+                                    </div>
+                                    <p class="text-sm text-gray-600">{{ streak.get_streak_type_display }}</p>
+                                    <p class="text-xs text-gray-500">Best: {{ streak.longest_streak }} days</p>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Active Challenges -->
+            {% if active_challenges %}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold">Active Challenges</h2>
+                        <a href="{% url 'gamification:challenges' %}" class="text-blue-500 hover:text-blue-600">View All →</a>
+                    </div>
+                    <div class="space-y-3">
+                        {% for challenge in active_challenges|slice:":3" %}
+                            <div class="challenge-card">
+                                <h4 class="font-semibold text-sm">{{ challenge.title }}</h4>
+                                <p class="text-xs text-gray-600 mt-1">{{ challenge.reward_points }} points</p>
+                                <div class="mt-3">
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar-fill" data-progress="30"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Recent Points -->
+            {% if recent_points %}
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <h2 class="text-xl font-semibold mb-4">Recent Points</h2>
+                    <div class="space-y-2">
+                        {% for point in recent_points|slice:":5" %}
+                            <div class="flex justify-between items-center text-sm">
+                                <div>
+                                    <p class="font-medium">{{ point.description }}</p>
+                                    <p class="text-xs text-gray-500">{{ point.created_at|timesince }} ago</p>
+                                </div>
+                                <span class="text-green-600 font-semibold">+{{ point.points }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Progress Overview -->
+    {% if user_progress %}
+        <div class="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h2 class="text-xl font-semibold mb-4">Your Progress</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {% for progress in user_progress|slice:":3" %}
+                    <div class="text-center">
+                        <h4 class="font-semibold mb-2">{{ progress.get_progress_type_display }}</h4>
+                        <div class="progress-bar-container mb-2">
+                            <div class="progress-bar-fill" data-progress="{{ progress.percentage_complete }}"></div>
+                        </div>
+                        <p class="text-sm text-gray-600">
+                            {{ progress.current_value|floatformat:1 }}/{{ progress.target_value|floatformat:1 }}
+                            ({{ progress.percentage_complete|floatformat:0 }}%)
+                        </p>
+                        {% if progress.is_completed %}
+                            <span class="text-green-600 text-sm font-semibold">✅ Completed!</span>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+// Set progress bar widths from data attributes
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-bar-fill').forEach(function(bar) {
+        const progress = bar.getAttribute('data-progress');
+        if (progress) {
+            bar.style.width = progress + '%';
+        }
+    });
+});
+
+// Auto-update progress every 30 seconds
+setInterval(() => {
+    fetch('/employee/gamification/api/update-progress/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.new_badges > 0) {
+            // Show notification for new badges
+            showNotification(`Congratulations! You earned ${data.new_badges} new badge(s)!`);
+            // Refresh the page to show new badges
+            setTimeout(() => location.reload(), 2000);
+        }
+    })
+    .catch(error => {
+        console.error('Error updating progress:', error);
+    });
+}, 30000);
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Helper function to show notifications
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+}
+</script>
+{% endblock %}

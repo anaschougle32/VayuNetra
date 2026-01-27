@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from core.views.employee_views import dashboard, trip_log, trips_list, manage_home_location, profile, update_profile, change_password, update_home_location, marketplace
 from core.views.redemption_views import redeem_credits
 
@@ -19,4 +19,16 @@ urlpatterns = [
     
     # Credit Redemption
     path('redeem/', redeem_credits, name='employee_redeem_credits'),
+    
+    # Pollution Awareness
+    path('pollution/', include('core.pollution_urls', namespace='pollution')),
+    
+    # Enhanced NLP
+    path('nlp/', include('core.enhanced_nlp_urls', namespace='enhanced_nlp')),
+    
+    # Predictive Analytics
+    path('analytics/', include('core.predictive_analytics_urls', namespace='predictive_analytics')),
+    
+    # Gamification
+    path('gamification/', include('core.gamification_urls', namespace='gamification')),
 ] 

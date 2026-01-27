@@ -339,6 +339,21 @@
                 
                 <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6" id="transport-options-container">
                     <div class="transport-option p-4 border border-gray-300 rounded-lg text-center cursor-pointer transition-all duration-300 hover:bg-green-50" 
+                         data-mode="two_wheeler_single" tabindex="0" role="button"
+                         onclick="selectTransportMode('two_wheeler_single');">
+                        <div class="text-3xl mb-2">🏍️</div>
+                        <div class="font-semibold">Two Wheeler (Solo)</div>
+                        <div class="text-sm text-green-600" id="credits-two_wheeler_single">Calculating...</div>
+                    </div>
+
+                    <div class="transport-option p-4 border border-gray-300 rounded-lg text-center cursor-pointer transition-all duration-300 hover:bg-green-50" 
+                         data-mode="two_wheeler_double" tabindex="0" role="button"
+                         onclick="selectTransportMode('two_wheeler_double');">
+                        <div class="text-3xl mb-2">🏍️</div>
+                        <div class="font-semibold">Two Wheeler (Carpool)</div>
+                        <div class="text-sm text-green-600" id="credits-two_wheeler_double">Calculating...</div>
+                    </div>
+                    <div class="transport-option p-4 border border-gray-300 rounded-lg text-center cursor-pointer transition-all duration-300 hover:bg-green-50" 
                          data-mode="public_transport" tabindex="0" role="button"
                          onclick="selectTransportMode('public_transport');">
                         <div class="text-3xl mb-2">🚆</div>
@@ -407,6 +422,12 @@
                     <div id="auto-detect-status" class="mb-4 hidden"></div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div id="occupancy-wrapper" class="hidden">
+                            <label for="occupancy" class="block text-sm font-medium text-gray-700 mb-1">Occupancy</label>
+                            <input type="number" id="occupancy" name="occupancy" min="2" max="2" value="2" readonly
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100" />
+                            <p class="text-xs text-gray-500 mt-1">Two Wheeler Carpool requires 2 passengers.</p>
+                        </div>
                         <!-- Time Period -->
                         <div>
                             <label for="time_period" class="block text-sm font-medium text-gray-700 mb-1">
@@ -587,19 +608,19 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div>
                         <span class="text-sm text-gray-500 block mb-1">Transport Mode:</span>
-                        <p class="text-lg font-medium" id="preview-transport">-</p>
+                        <p class="text-lg font-medium" id="trip-preview-transport">-</p>
                     </div>
                     <div>
                         <span class="text-sm text-gray-500 block mb-1">Distance:</span>
-                        <p class="text-lg font-medium" id="preview-distance">0 km</p>
+                        <p class="text-lg font-medium" id="trip-preview-distance">0 km</p>
                     </div>
                     <div>
                         <span class="text-sm text-gray-500 block mb-1">Estimated Duration:</span>
-                        <p class="text-lg font-medium" id="preview-duration">0 min</p>
+                        <p class="text-lg font-medium" id="trip-preview-duration">0 min</p>
                     </div>
                     <div>
                         <span class="text-sm text-gray-500 block mb-1">Carbon Credits:</span>
-                        <p class="text-lg font-medium text-green-600" id="preview-credits">0 credits</p>
+                        <p class="text-lg font-medium text-green-600" id="trip-preview-credits">0 credits</p>
                     </div>
                 </div>
             </div>
@@ -812,6 +833,8 @@
     const EMISSION_FACTORS = {
         'car': { baseline: 0.130, actual: 0.130 },
         'carpool': { baseline: 0.130, actual: 0.071 },
+        'two_wheeler_single': { baseline: 0.130, actual: 0.029 },
+        'two_wheeler_double': { baseline: 0.130, actual: 0.0145 },
         'public_transport': { baseline: 0.130, actual: 0.015161 },
         'bicycle': { baseline: 0.120, actual: 0.000 },
         'walking': { baseline: 0.150, actual: 0.000 },
@@ -885,6 +908,11 @@
         
         // Show/hide calculation parameters
         const paramsSection = document.getElementById('calculation-params');
+        const occupancyWrapper = document.getElementById('occupancy-wrapper');
+        if (occupancyWrapper) {
+            occupancyWrapper.classList.toggle('hidden', mode !== 'two_wheeler_double');
+        }
+
         if (mode === 'work_from_home') {
             if (paramsSection) paramsSection.classList.add('hidden');
             const mapSection = document.getElementById('map-section');
@@ -910,12 +938,13 @@
         return peakFactor * trafficMultiplier;
     }
     
-    function calculateContextFactor(weather, routeType, aqiLevel, season) {
+    function calculateContextFactor(weather, routeType, aqiLevel, season, mode) {
         const weatherFactor = WEATHER_FACTORS[weather] || 1.0;
         const routeFactor = ROUTE_FACTORS[routeType] || 1.0;
         const aqiFactor = AQI_FACTORS[aqiLevel] || 1.0;
         const seasonalFactor = SEASONAL_FACTORS[season] || 1.0;
-        return weatherFactor * routeFactor * aqiFactor * seasonalFactor;
+        const loadFactor = mode === 'two_wheeler_double' ? 1.02 : (mode === 'two_wheeler_single' ? 0.95 : 1.0);
+        return weatherFactor * routeFactor * aqiFactor * seasonalFactor * loadFactor;
     }
     
     function calculateCredits(mode, distance, timePeriod, trafficCondition, weather, routeType, aqiLevel, season) {
@@ -926,7 +955,7 @@
         const factors = EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
         const emissionDiff = factors.baseline - factors.actual;
         const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
-        const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season);
+        const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
         
         const credits = emissionDiff * distance * timeWeight * contextFactor;
         return Math.max(0, credits);
@@ -958,7 +987,7 @@
         const factors = EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
         const emissionDiff = factors.baseline - factors.actual;
         const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
-        const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season);
+        const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
         const credits = calculateCredits(mode, distance, timePeriod, trafficCondition, weather, routeType, aqiLevel, season);
         
         // Update preview
@@ -1006,7 +1035,6 @@
             option.addEventListener('click', function() {
                 const mode = this.getAttribute('data-mode');
                 selectTransportMode(mode);
-            });
             });
         });
     });
@@ -1062,8 +1090,8 @@
                         }
                     }
                 }
-            }, 500);
-        }
+            }
+        }, 500);
     });
 </script>
 {% endblock %} 

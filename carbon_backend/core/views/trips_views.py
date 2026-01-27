@@ -442,10 +442,20 @@ def create_trip(request):
         recency_days = get_recency_days(trip_start)
         time_weight = calculate_time_weight(time_period, traffic_condition, recency_days)
         
+        occupancy = request.POST.get('occupancy')
+        load_factor = 1.0
+        if transport_mode == 'two_wheeler_single':
+            load_factor = 0.95
+        elif transport_mode == 'two_wheeler_double':
+            if occupancy and str(occupancy) != '2':
+                messages.error(request, "Two Wheeler (Carpool) requires 2 passengers.")
+                return redirect('employee_trip_log')
+            load_factor = 1.02
+
         # Calculate context factor
         context_factor = calculate_context_factor(
             weather_condition, route_type, aqi_level,
-            load_factor=1.0, season=season
+            load_factor=load_factor, season=season
         )
         
         # Try ML prediction first, fallback to formula

@@ -9,6 +9,8 @@ class Trip(models.Model):
     TRANSPORT_MODES = (
         ('car', 'Car (Single Occupancy)'),
         ('carpool', 'Carpool'),
+        ('two_wheeler_single', 'Two Wheeler (Solo)'),
+        ('two_wheeler_double', 'Two Wheeler (Carpool - 2 persons)'),
         ('public_transport', 'Public Transport'),
         ('bicycle', 'Bicycle'),
         ('walking', 'Walking'),

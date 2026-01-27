@@ -10,25 +10,94 @@
     }
     
     .stat-card {
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .stat-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0px 20px 40px rgba(0, 0, 0, 0.15);
     }
     
     .quick-actions-card {
         border-radius: 16px;
         background-color: white;
         box-shadow: 0px 6px 24px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .quick-actions-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0px 12px 30px rgba(0, 0, 0, 0.12);
     }
     
     .action-btn {
-        transition: all 0.3s ease;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 12px;
     }
     
     .action-btn:hover {
-        transform: translateY(-2px);
+        transform: translateY(-4px) scale(1.02);
+        box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+    
+    .modern-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 16px;
+        box-shadow: 0px 6px 24px rgba(0, 0, 0, 0.08);
+    }
+    
+    .modern-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0px 16px 40px rgba(0, 0, 0, 0.12);
+    }
+    
+    /* Smooth animations for progress bars */
+    .progress-bar {
+        transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    /* Smooth fade in for content */
+    .fade-in {
+        animation: fadeIn 0.6s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Smooth hover for badges */
+    .badge-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .badge-card:hover {
+        transform: translateY(-4px) rotate(2deg);
+        box-shadow: 0px 12px 24px rgba(0, 0, 0, 0.15);
+    }
+    
+    /* Smooth transitions for navigation */
+    .nav-link {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    
+    .nav-link::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: var(--primary);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transform: translateX(-50%);
+    }
+    
+    .nav-link:hover::after,
+    .nav-link.active::after {
+        width: 100%;
     }
     
     .chart-container {
@@ -71,19 +140,19 @@
         </div>
     </div>
 
-    <!-- Stats Overview -->
-    <div class="mb-10">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-6">My Carbon Impact</h2>
+    <!-- Enhanced Stats Overview with Real User Data -->
+    <div class="mb-10 fade-in">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-6">My Carbon Impact & Achievements</h2>
         
-        <!-- Single Sustainability Tip -->
+        <!-- Sustainability Tip -->
         {% if sustainability_tip %}
-        <div class="modern-card p-5 mb-6 bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400 shadow-lg">
+        <div class="modern-card p-5 mb-6 bg-gradient-to-r from-green-100 to-emerald-100 border-2 border-green-400 shadow-lg fade-in">
             <div class="flex items-start">
                 <div class="flex-shrink-0">
                     <span class="text-4xl">🌱</span>
                 </div>
                 <div class="ml-4 flex-1">
-                    <h3 class="text-lg font-bold text-green-800 mb-2">Sustainability Tip</h3>
+                    <h3 class="text-lg font-bold text-green-800 mb-2">Today's Sustainability Tip</h3>
                     <p class="text-base font-semibold text-gray-900 leading-relaxed">
                         {{ sustainability_tip }}
                     </p>
@@ -91,8 +160,33 @@
             </div>
         </div>
         {% endif %}
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div class="modern-card p-6 stat-card">
+        
+        <!-- Pollution Alerts -->
+        {% if total_alerts > 0 %}
+        <div class="modern-card p-5 mb-6 bg-gradient-to-r from-red-100 to-orange-100 border-2 border-red-400 shadow-lg fade-in">
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                    <span class="text-4xl">⚠️</span>
+                </div>
+                <div class="ml-4 flex-1">
+                    <h3 class="text-lg font-bold text-red-800 mb-2">Pollution Alerts</h3>
+                    <p class="text-base font-semibold text-gray-900 leading-relaxed">
+                        You have {{ total_alerts }} active pollution alert{% if total_alerts != 1 %}s{% endif %}. 
+                        <a href="{% url 'pollution:dashboard' %}" class="text-red-600 hover:text-red-800 underline">Check air quality now</a>
+                    </p>
+                    {% for alert in pollution_alerts %}
+                    <div class="mt-2 text-sm text-red-700">
+                        • {{ alert.get_alert_type_display }}: {{ alert.message|truncatewords:15 }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
+            <!-- Total Credits -->
+            <div class="modern-card p-6 stat-card fade-in">
                 <div class="flex items-start">
                     <div class="p-3 rounded-full bg-green-100 text-green-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -103,13 +197,14 @@
                         <h3 class="text-lg font-medium text-gray-500">Total Credits</h3>
                         <p class="text-3xl font-bold text-gray-800">{{ total_credits|floatformat:2 }}</p>
                         <div class="text-sm text-gray-500 mt-1">
-                            <span class="text-green-600 font-medium">+{{ credits_last_week|floatformat:2 }}</span> in last 7 days
+                            <span class="text-green-600 font-medium">+{{ credits_last_week|floatformat:2 }}</span> this week
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="modern-card p-6 stat-card">
+            <!-- Total Trips -->
+            <div class="modern-card p-6 stat-card fade-in">
                 <div class="flex items-start">
                     <div class="p-3 rounded-full bg-blue-100 text-blue-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,7 +221,8 @@
                 </div>
             </div>
             
-            <div class="modern-card p-6 stat-card">
+            <!-- CO2 Saved -->
+            <div class="modern-card p-6 stat-card fade-in">
                 <div class="flex items-start">
                     <div class="p-3 rounded-full bg-purple-100 text-purple-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -137,24 +233,100 @@
                         <h3 class="text-lg font-medium text-gray-500">CO₂ Saved</h3>
                         <p class="text-3xl font-bold text-gray-800">{{ co2_saved|floatformat:1 }} kg</p>
                         <div class="text-sm text-gray-500 mt-1">
-                            <span class="trend-indicator trend-up">↑ Equivalent to {{ tree_equivalent }} trees</span>
+                            <span class="trend-indicator trend-up">↑ {{ tree_equivalent }} trees equivalent</span>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="modern-card p-6 stat-card">
+            <!-- CO2 Emitted -->
+            <div class="modern-card p-6 stat-card fade-in">
                 <div class="flex items-start">
-                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-medium text-gray-500">Streak</h3>
-                        <p class="text-3xl font-bold text-gray-800">{{ current_streak }} days</p>
+                        <h3 class="text-lg font-medium text-gray-500">CO₂ Emitted</h3>
+                        <p class="text-3xl font-bold text-gray-800">{{ co2_emitted|floatformat:1 }} kg</p>
                         <div class="text-sm text-gray-500 mt-1">
-                            Best: <span class="text-green-600 font-medium">{{ best_streak }}</span> days
+                            <span class="trend-indicator trend-down">↓ Baseline emissions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Gamification Stats -->
+            <div class="modern-card p-6 stat-card fade-in">
+                <div class="flex items-start">
+                    <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-gray-500">Achievements</h3>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_badges }}</p>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="text-green-600 font-medium">{{ current_streak }}</span> day streak
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Stats Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
+            <!-- Points -->
+            <div class="modern-card p-6 stat-card fade-in">
+                <div class="flex items-start">
+                    <div class="p-3 rounded-full bg-indigo-100 text-indigo-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-gray-500">Total Points</h3>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_points }}</p>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="text-green-600 font-medium">+{{ points_this_week }}</span> this week
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Progress Goals -->
+            <div class="modern-card p-6 stat-card fade-in">
+                <div class="flex items-start">
+                    <div class="p-3 rounded-full bg-teal-100 text-teal-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-gray-500">Goals Completed</h3>
+                        <p class="text-3xl font-bold text-gray-800">{{ user_progress }}</p>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="text-blue-600 font-medium">{{ active_progress|length }}</span> active goals
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Best Streak -->
+            <div class="modern-card p-6 stat-card fade-in">
+                <div class="flex items-start">
+                    <div class="p-3 rounded-full bg-orange-100 text-orange-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-lg font-medium text-gray-500">Best Streak</h3>
+                        <p class="text-3xl font-bold text-gray-800">{{ best_streak }} days</p>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="text-green-600 font-medium">Keep it up!</span>
                         </div>
                     </div>
                 </div>
@@ -162,7 +334,72 @@
         </div>
     </div>
     
-    <!-- Trip Charts & Quick Actions -->
+    <!-- Recent Achievements & Progress -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        <!-- Recent Badges -->
+        {% if recent_badges %}
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Recent Achievements</h2>
+            <div class="modern-card p-6">
+                <div class="space-y-4">
+                    {% for badge in recent_badges %}
+                    <div class="flex items-center p-4 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg border border-yellow-200">
+                        <div class="flex-shrink-0">
+                            <div class="w-12 h-12 rounded-full bg-{{ badge.badge.badge_type|lower }}-100 flex items-center justify-center">
+                                <span class="text-2xl">{{ badge.badge.icon }}</span>
+                            </div>
+                        </div>
+                        <div class="ml-4 flex-1">
+                            <h4 class="text-lg font-semibold text-gray-900">{{ badge.badge.name }}</h4>
+                            <p class="text-sm text-gray-600">{{ badge.badge.description }}</p>
+                            <p class="text-xs text-gray-500 mt-1">Earned {{ badge.earned_at|date:"M d, Y" }}</p>
+                        </div>
+                        <div class="flex-shrink-0">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-{{ badge.badge.badge_type|lower }}-100 text-{{ badge.badge.badge_type|lower }}-800">
+                                {{ badge.badge.get_badge_type_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="{% url 'gamification:dashboard' %}" class="text-sm font-medium text-yellow-600 hover:text-yellow-800">
+                        View all achievements <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Active Progress Goals -->
+        {% if active_progress %}
+        <div>
+            <h2 class="text-2xl font-semibold text-gray-800 mb-6">Active Goals</h2>
+            <div class="modern-card p-6">
+                <div class="space-y-4">
+                    {% for progress in active_progress %}
+                    <div class="p-4 bg-gradient-to-r from-blue-50 to-teal-50 rounded-lg border border-blue-200">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-lg font-semibold text-gray-900">{{ progress.get_progress_type_display }}</h4>
+                            <span class="text-sm text-gray-600">{{ progress.current_value }}/{{ progress.target_value }}</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-blue-500 to-teal-500 h-2 rounded-full transition-all duration-300 progress-bar" 
+                                 data-progress="{{ progress.percentage_complete|default:0 }}"></div>
+                        </div>
+                        <p class="text-sm text-gray-600 mt-2">{{ progress.percentage_complete|floatformat:1 }}% complete</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                <div class="mt-4 text-center">
+                    <a href="{% url 'gamification:dashboard' %}" class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                        View all goals <span aria-hidden="true">&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-10">
         <!-- Charts Section -->
         <div class="lg:col-span-2">
@@ -237,6 +474,83 @@
                         <div class="ml-4">
                             <p class="text-lg font-medium text-gray-900">Redeem Credits</p>
                             <span class="text-sm text-gray-500">Convert credits to cash, coupons, or vouchers</span>
+                        </div>
+                    </a>
+                    
+                    <!-- Pollution Awareness Button -->
+                    <a href="{% url 'pollution:dashboard' %}" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
+                        <div class="p-2 rounded-full bg-red-100 text-red-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1 9.999 5.002 5.002 0 00.097-.988l.703-2.551A3 3 0 0017 14H7a3 3 0 00-2.795 1.894l-.703 2.551A5 5 0 017 19a4 4 0 004-4z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 13V3m0 0l-4 4m4-4l4 4" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-lg font-medium text-gray-900">Pollution Awareness</p>
+                            <span class="text-sm text-gray-500">Check air quality and industrial zones</span>
+                        </div>
+                    </a>
+                    
+                    <!-- Enhanced NLP Button -->
+                    <a href="{% url 'enhanced_nlp:nlp_dashboard' %}" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
+                        <div class="p-2 rounded-full bg-purple-100 text-purple-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m0 16v1m9.167-9.167H14.833M5.5 10.5h13M5.5 15.5h13m-13-6h13"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-lg font-medium text-gray-900">AI Insights</p>
+                            <span class="text-sm text-gray-500">Advanced sustainability analysis</span>
+                        </div>
+                    </a>
+                    
+                    <!-- Predictive Analytics Button -->
+                    <a href="/analytics/dashboard/" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
+                        <div class="p-2 rounded-full bg-blue-100 text-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-lg font-medium text-gray-900">Predictive Analytics</p>
+                            <span class="text-sm text-gray-500">Carbon forecasting & insights</span>
+                        </div>
+                    </a>
+                    
+                    <!-- Gamification Button -->
+                    <a href="{% url 'gamification:dashboard' %}" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
+                        <div class="p-2 rounded-full bg-yellow-100 text-yellow-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-lg font-medium text-gray-900">Achievements & Leaderboards</p>
+                            <span class="text-sm text-gray-500">View badges, progress, and compete with others</span>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'gamification:leaderboards' %}" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
+                        <div class="p-2 rounded-full bg-blue-100 text-blue-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6a2 2 0 012-2h2a2 2 0 012 2v13m-6 0H7a2 2 0 01-2-2V9a2 2 0 012-2h2m6 12h2a2 2 0 002-2V7a2 2 0 00-2-2h-2" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-lg font-medium text-gray-900">Leaderboards</p>
+                            <span class="text-sm text-gray-500">Compare rankings across challenges</span>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'gamification:progress' %}" class="flex items-center p-4 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 action-btn">
+                        <div class="p-2 rounded-full bg-emerald-100 text-emerald-600">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 4 4 5-7" />
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-lg font-medium text-gray-900">Progress Tracker</p>
+                            <span class="text-sm text-gray-500">Monitor your sustainability goals</span>
                         </div>
                     </a>
                 </div>
@@ -337,22 +651,11 @@
                                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
                                     Flagged
                                 </span>
-                                {% else %}
-                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
-                                    Pending
-                                </span>
                                 {% endif %}
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-                                No recent trips found. <a href="{% url 'employee_trip_log' %}" class="text-green-600 hover:text-green-800">Log your first trip!</a>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
-                </table>
             </div>
             {% if recent_trips %}
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
@@ -379,6 +682,14 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize charts
         initializeCharts();
+        
+        // Set progress bar widths from data attributes
+        document.querySelectorAll('.progress-bar').forEach(function(bar) {
+            const progress = bar.getAttribute('data-progress');
+            if (progress) {
+                bar.style.width = progress + '%';
+            }
+        });
         
         // Add event listeners for period selectors
         document.querySelectorAll('.period-selector').forEach(button => {

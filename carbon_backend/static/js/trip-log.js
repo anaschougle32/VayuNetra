@@ -963,7 +963,7 @@ function updateTripPreview(distance, duration) {
     // Get selected transport mode
     const transportMode = document.getElementById('transport-mode').value;
     
-    // Set mode name and credit rate
+    // Set mode name and credit rate (fallback only)
     let modeName = 'Unknown';
     let creditsPerKm = 0.5;
     
@@ -979,6 +979,14 @@ function updateTripPreview(distance, duration) {
         case 'public_transport':
             modeName = 'Public Transport';
             creditsPerKm = 3;
+            break;
+        case 'two_wheeler_single':
+            modeName = 'Two Wheeler (Solo)';
+            creditsPerKm = 2.5;
+            break;
+        case 'two_wheeler_double':
+            modeName = 'Two Wheeler (Carpool)';
+            creditsPerKm = 3.2;
             break;
         case 'carpool':
             modeName = 'Carpool';
@@ -998,15 +1006,32 @@ function updateTripPreview(distance, duration) {
     let totalCredits = 0;
     if (transportMode === 'work_from_home') {
         totalCredits = 10; // Fixed amount for WFH
+    } else if (typeof calculateCredits === 'function') {
+        const timePeriod = document.getElementById('time_period')?.value || 'off_peak';
+        const trafficCondition = document.getElementById('traffic_condition')?.value || 'moderate';
+        const weather = document.getElementById('weather_condition')?.value || 'normal';
+        const routeType = document.getElementById('route_type')?.value || 'suburban';
+        const aqiLevel = document.getElementById('aqi_level')?.value || 'moderate';
+        const season = document.getElementById('season')?.value || 'normal';
+        totalCredits = calculateCredits(
+            transportMode,
+            distance,
+            timePeriod,
+            trafficCondition,
+            weather,
+            routeType,
+            aqiLevel,
+            season
+        );
     } else {
         totalCredits = Math.round(distance * creditsPerKm * 10) / 10;
     }
     
     // Update preview elements
-    document.getElementById('preview-transport').textContent = modeName;
-    document.getElementById('preview-distance').textContent = distance.toFixed(2) + ' km';
-    document.getElementById('preview-duration').textContent = Math.round(duration) + ' min';
-    document.getElementById('preview-credits').textContent = totalCredits.toFixed(1) + ' credits';
+    document.getElementById('trip-preview-transport').textContent = modeName;
+    document.getElementById('trip-preview-distance').textContent = distance.toFixed(2) + ' km';
+    document.getElementById('trip-preview-duration').textContent = Math.round(duration) + ' min';
+    document.getElementById('trip-preview-credits').textContent = totalCredits.toFixed(2) + ' credits';
 }
 
 // Get the Google Maps travel mode based on selected transport mode
@@ -1021,6 +1046,8 @@ function getTravelMode() {
             return google.maps.TravelMode.BICYCLING;
         case 'public_transport':
             return google.maps.TravelMode.TRANSIT;
+        case 'two_wheeler_single':
+        case 'two_wheeler_double':
         case 'carpool':
         case 'car':
         default:

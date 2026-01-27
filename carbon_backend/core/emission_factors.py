@@ -19,6 +19,8 @@ INDIA_EMISSION_FACTORS = {
         'petrol_car_sedan': 0.142,          # >1400cc, Gasoline
         'diesel_car_hatchback': 0.117,      # <1400cc, Diesel
         'motorcycle_125cc': 0.029,          # <125cc, Gasoline
+        'two_wheeler_single': 0.130,        # Baseline comparison uses petrol car
+        'two_wheeler_double': 0.130,        # Baseline comparison uses petrol car
         'autorickshaw_petrol': 0.1135,      # Petrol auto-rickshaw
         'autorickshaw_cng': 0.10768,        # CNG auto-rickshaw
         'bus_city': 0.015161,               # City bus (per passenger-km)
@@ -35,6 +37,8 @@ INDIA_EMISSION_FACTORS = {
         'metro_subway': 0.008,              # Metro/Subway (per passenger-km)
         'shared_taxi': 0.071,               # Assuming 2 passengers
         'motorcycle': 0.029,                # Motorcycle
+        'two_wheeler_single': 0.029,        # Two Wheeler (Solo)
+        'two_wheeler_double': 0.0145,       # Two Wheeler (Carpool - per person)
         'petrol_car': 0.130,                # Petrol car (no savings)
         'diesel_car': 0.117,                # Diesel car
         'autorickshaw_petrol': 0.1135,      # Petrol auto-rickshaw
@@ -46,6 +50,8 @@ INDIA_EMISSION_FACTORS = {
 TRANSPORT_MODE_MAPPING = {
     'car': 'petrol_car',
     'carpool': 'shared_taxi',
+    'two_wheeler_single': 'two_wheeler_single',
+    'two_wheeler_double': 'two_wheeler_double',
     'public_transport': 'bus_city',
     'bicycle': 'cycling',
     'walking': 'walking',

@@ -209,6 +209,9 @@ GOOGLE_MAPS_API_KEY = os.getenv('GOOGLE_MAPS_API_KEY', 'AIzaSyA-test-key-for-dev
 # OpenRouter API key for AI-powered sustainability tips
 OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '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')
 
+# OpenWeatherMap API key for pollution data
+OPENWEATHER_API_KEY = os.getenv('OPENWEATHER_API_KEY', 'your-openweather-api-key-here')
+
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 

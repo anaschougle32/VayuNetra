@@ -270,6 +270,8 @@
                         <a href="{% url 'employee_dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_dashboard' %}active{% endif %}">Dashboard</a>
                         <a href="{% url 'employee_trip_log' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_trip_log' %}active{% endif %}">Log Trip</a>
                         <a href="{% url 'employee_trips' %}" class="nav-link {% if request.resolver_match.url_name == 'employee_trips' %}active{% endif %}">My Trips</a>
+                        <a href="{% url 'pollution:dashboard' %}" class="nav-link {% if 'pollution' in request.resolver_match.url_name %}active{% endif %}">Pollution</a>
+                        <a href="{% url 'gamification:dashboard' %}" class="nav-link {% if 'gamification' in request.resolver_match.url_name %}active{% endif %}">Achievements</a>
                         {% endif %}
                     </div>
                     {% endif %}
