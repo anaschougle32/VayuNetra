@@ -1,6 +1,7 @@
 """
 Views for gamification features - leaderboards, badges, progress
 """
+import logging
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -21,6 +22,8 @@ from core.gamification_models import (
 )
 from trips.models import Trip, CarbonCredit
 
+# Set up logger
+logger = logging.getLogger(__name__)
 
 @login_required
 def gamification_dashboard(request):
