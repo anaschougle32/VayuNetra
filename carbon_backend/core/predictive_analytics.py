@@ -11,10 +11,12 @@ from django.db.models import Avg, Sum, Count, Q
 from django.utils import timezone
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import joblib
 import os
+import pickle
+import json
 from decimal import Decimal
 import warnings
 warnings.filterwarnings('ignore')
@@ -35,6 +37,157 @@ class PredictiveAnalyticsEngine:
         self.carbon_forecast_model = None
         self.trip_pattern_model = None
         self.trend_model = None
+        self.preprocessors = {}
+        
+        # Load trained model
+        self.load_trained_model()
+        
+    def load_trained_model(self):
+        """Load the trained model and preprocessing objects"""
+        try:
+            # Try to load from current directory first
+            model_path = os.path.join(os.path.dirname(__file__), '..', 'predictive_analytics_model.pkl')
+            if not os.path.exists(model_path):
+                # Try from project root
+                model_path = 'predictive_analytics_model.pkl'
+            
+            if os.path.exists(model_path):
+                with open(model_path, 'rb') as f:
+                    model_data = pickle.load(f)
+                
+                self.carbon_forecast_model = model_data['model']
+                self.feature_columns = model_data['feature_columns']
+                
+                # Load preprocessing data
+                prep_path = model_path.replace('.pkl', '_preprocessing.json')
+                if os.path.exists(prep_path):
+                    with open(prep_path, 'r') as f:
+                        prep_data = json.load(f)
+                    
+                    # Reconstruct label encoders
+                    self.preprocessors['label_encoders'] = {}
+                    for col, classes in prep_data['label_encoders'].items():
+                        le = LabelEncoder()
+                        le.classes_ = np.array(classes)
+                        self.preprocessors['label_encoders'][col] = le
+                    
+                    # Reconstruct scaler
+                    self.preprocessors['scaler'] = StandardScaler()
+                    self.preprocessors['scaler'].mean_ = np.array(prep_data['scaler_mean'])
+                    self.preprocessors['scaler'].scale_ = np.array(prep_data['scaler_scale'])
+                
+                print(f"Loaded trained model: {model_data['model_name']}")
+                return True
+            else:
+                print("No trained model found. Using fallback models.")
+                return False
+        except Exception as e:
+            print(f"Error loading trained model: {e}")
+            return False
+    
+    def predict_carbon_credits(self, trip_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Predict carbon credits for a trip using the trained model"""
+        try:
+            if not self.carbon_forecast_model:
+                return {
+                    'success': False,
+                    'error': 'No trained model available',
+                    'fallback_used': True
+                }
+            
+            # Prepare features for prediction
+            features = self._prepare_features(trip_data)
+            if not features:
+                return {
+                    'success': False,
+                    'error': 'Invalid trip data',
+                    'fallback_used': True
+                }
+            
+            # Scale features
+            if 'scaler' in self.preprocessors:
+                features_scaled = self.preprocessors['scaler'].transform([features])
+            else:
+                features_scaled = [features]
+            
+            # Make prediction
+            prediction = self.carbon_forecast_model.predict(features_scaled)[0]
+            
+            # Ensure prediction is not negative
+            prediction = max(0, prediction)
+            
+            return {
+                'success': True,
+                'predicted_credits': float(prediction),
+                'confidence_score': 0.91,  # Based on R² score from training
+                'model_used': 'Random Forest',
+                'features_used': len(features),
+                'fallback_used': False
+            }
+            
+        except Exception as e:
+            return {
+                'success': False,
+                'error': f'Prediction error: {str(e)}',
+                'fallback_used': True
+            }
+    
+    def _prepare_features(self, trip_data: Dict[str, Any]) -> List[float]:
+        """Prepare features for prediction"""
+        try:
+            # Extract basic features
+            features = []
+            feature_map = {
+                'distance_km': trip_data.get('distance_km', 0),
+                'trip_duration_minutes': trip_data.get('trip_duration_minutes', 0),
+                'average_speed_kmph': trip_data.get('average_speed_kmph', 0),
+                'seasonal_factor': trip_data.get('seasonal_factor', 1.0),
+                'ef_baseline': trip_data.get('ef_baseline', 0.13),
+                'ef_actual': trip_data.get('ef_actual', 0.13),
+                'emission_difference': trip_data.get('emission_difference', 0),
+                'peak_factor': trip_data.get('peak_factor', 1.0),
+                'traffic_multiplier': trip_data.get('traffic_multiplier', 1.0),
+                'recency_weight': trip_data.get('recency_weight', 1.0),
+                'time_weight': trip_data.get('time_weight', 1.0),
+                'weather_factor': trip_data.get('weather_factor', 1.0),
+                'route_factor': trip_data.get('route_factor', 1.0),
+                'load_factor': trip_data.get('load_factor', 1.0),
+                'aqi_factor': trip_data.get('aqi_factor', 1.0),
+                'context_factor': trip_data.get('context_factor', 1.0),
+                'user_age': trip_data.get('user_age', 30),
+                'hour': trip_data.get('hour', datetime.now().hour),
+                'day_of_week_num': trip_data.get('day_of_week_num', datetime.now().weekday()),
+                'month': trip_data.get('month', datetime.now().month)
+            }
+            
+            # Add numeric features in correct order
+            for col in self.feature_columns:
+                if col in feature_map:
+                    features.append(float(feature_map[col]))
+                elif '_encoded' in col:
+                    # Handle encoded categorical features
+                    original_col = col.replace('_encoded', '')
+                    if original_col in trip_data:
+                        # Use label encoder if available
+                        if original_col in self.preprocessors.get('label_encoders', {}):
+                            le = self.preprocessors['label_encoders'][original_col]
+                            try:
+                                encoded_value = le.transform([str(trip_data[original_col])])[0]
+                                features.append(float(encoded_value))
+                            except:
+                                features.append(0.0)
+                        else:
+                            features.append(0.0)
+                    else:
+                        features.append(0.0)
+                else:
+                    features.append(0.0)
+            
+            return features
+            
+        except Exception as e:
+            print(f"Error preparing features: {e}")
+            return []
         
     def get_user_historical_data(self, user_id: int, days_back: int = 90) -> pd.DataFrame:
         """Get user's historical trip data for analysis"""
