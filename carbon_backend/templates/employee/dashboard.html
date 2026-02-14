@@ -203,10 +203,11 @@
     {% endif %}
 
     <!-- Primary Stats Grid -->
-    <div class="mb-8">
-        <h2 class="text-2xl font-semibold text-gray-800 mb-6">Your Carbon Impact & Achievements</h2>
+    <div class="mb-10">
+        <h2 class="text-2xl font-semibold text-gray-800 mb-8">Your Carbon Impact & Achievements</h2>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+        <!-- Top Row - Main Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <!-- Total Credits -->
             <div class="modern-card p-6 stat-card fade-in">
                 <div class="flex items-start">
@@ -215,7 +216,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
+                    <div class="ml-4 flex-1">
                         <h3 class="text-lg font-medium text-gray-500">Total Credits</h3>
                         <p class="text-3xl font-bold text-gray-800">{{ total_credits|floatformat:2 }}</p>
                         <div class="text-sm text-gray-500 mt-1">
@@ -233,7 +234,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
                         </svg>
                     </div>
-                    <div class="ml-4">
+                    <div class="ml-4 flex-1">
                         <h3 class="text-lg font-medium text-gray-500">Total Trips</h3>
                         <p class="text-3xl font-bold text-gray-800">{{ total_trips }}</p>
                         <div class="text-sm text-gray-500 mt-1">
@@ -251,29 +252,11 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
+                    <div class="ml-4 flex-1">
                         <h3 class="text-lg font-medium text-gray-500">CO₂ Saved</h3>
                         <p class="text-3xl font-bold text-gray-800">{{ co2_saved|floatformat:1 }} kg</p>
                         <div class="text-sm text-gray-500 mt-1">
-                            <span class="trend-indicator trend-up">↑ {{ tree_equivalent }} trees equivalent</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- CO2 Emitted -->
-            <div class="modern-card p-6 stat-card fade-in">
-                <div class="flex items-start">
-                    <div class="p-3 rounded-full bg-red-100 text-red-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <h3 class="text-lg font-medium text-gray-500">CO₂ Emitted</h3>
-                        <p class="text-3xl font-bold text-gray-800">{{ co2_emitted|floatformat:1 }} kg</p>
-                        <div class="text-sm text-gray-500 mt-1">
-                            <span class="trend-indicator trend-down">↓ Baseline emissions</span>
+                            <span class="trend-indicator trend-up">↑ {{ tree_equivalent }} trees</span>
                         </div>
                     </div>
                 </div>
@@ -287,7 +270,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                         </svg>
                     </div>
-                    <div class="ml-4">
+                    <div class="ml-4 flex-1">
                         <h3 class="text-lg font-medium text-gray-500">Current Streak</h3>
                         <p class="text-3xl font-bold text-gray-800">{{ current_streak_days }}</p>
                         <div class="text-sm text-gray-500 mt-1">
@@ -297,59 +280,59 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Secondary Stats Row -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
-        <!-- Total Points -->
-        <div class="modern-card p-6 stat-card fade-in">
-            <div class="flex items-start">
-                <div class="p-3 rounded-full bg-indigo-100 text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <h3 class="text-lg font-medium text-gray-500">Total Points</h3>
-                    <p class="text-3xl font-bold text-gray-800">{{ total_points }}</p>
-                    <div class="text-sm text-gray-500 mt-1">
-                        <span class="text-green-600 font-medium">+{{ points_this_week }}</span> this week
+        <!-- Bottom Row - Secondary Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- CO2 Emitted -->
+            <div class="modern-card p-6 stat-card fade-in">
+                <div class="flex items-start">
+                    <div class="p-3 rounded-full bg-red-100 text-red-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                        </svg>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-lg font-medium text-gray-500">CO₂ Emitted</h3>
+                        <p class="text-3xl font-bold text-gray-800">{{ co2_emitted|floatformat:1 }} kg</p>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="trend-indicator trend-down">↓ Baseline</span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Wallet Balance -->
-        <div class="modern-card p-6 stat-card fade-in">
-            <div class="flex items-start">
-                <div class="p-3 rounded-full bg-green-100 text-green-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h1m4 0h1m-7 4h1m4 0h1M3 21h18M3 3h18" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <h3 class="text-lg font-medium text-gray-500">Wallet Balance</h3>
-                    <p class="text-3xl font-bold text-gray-800">${{ wallet_balance|floatformat:2 }}</p>
-                    <div class="text-sm text-gray-500 mt-1">
-                        <span class="text-blue-600 font-medium">Available for redemption</span>
+            
+            <!-- Total Points -->
+            <div class="modern-card p-6 stat-card fade-in">
+                <div class="flex items-start">
+                    <div class="p-3 rounded-full bg-indigo-100 text-indigo-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+                        </svg>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-lg font-medium text-gray-500">Total Points</h3>
+                        <p class="text-3xl font-bold text-gray-800">{{ total_points }}</p>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="text-green-600 font-medium">+{{ points_this_week }}</span> this week
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        
-        <!-- Recent Badges -->
-        <div class="modern-card p-6 stat-card fade-in">
-            <div class="flex items-start">
-                <div class="p-3 rounded-full bg-yellow-100 text-yellow-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4 6 4m-6 0l6-6-6 6m0 0l-6 6 6 6m0 0l6-6-6 6 6" />
-                    </svg>
-                </div>
-                <div class="ml-4">
-                    <h3 class="text-lg font-medium text-gray-500">Recent Badges</h3>
-                    <p class="text-3xl font-bold text-gray-800">{{ recent_badges|length }}</p>
-                    <div class="text-sm text-gray-500 mt-1">
-                        <span class="text-purple-600 font-medium">{{ total_badges }} total earned</span>
+            
+            <!-- Wallet Balance -->
+            <div class="modern-card p-6 stat-card fade-in">
+                <div class="flex items-start">
+                    <div class="p-3 rounded-full bg-green-100 text-green-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h1m4 0h1m-7 4h1m4 0h1M3 21h18M3 3h18" />
+                        </svg>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-lg font-medium text-gray-500">Wallet Balance</h3>
+                        <p class="text-3xl font-bold text-gray-800">${{ wallet_balance|floatformat:2 }}</p>
+                        <div class="text-sm text-gray-500 mt-1">
+                            <span class="text-blue-600 font-medium">Available</span>
+                        </div>
                     </div>
                 </div>
             </div>
