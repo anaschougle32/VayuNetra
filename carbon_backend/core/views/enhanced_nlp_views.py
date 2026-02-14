@@ -46,6 +46,38 @@ def process_nlp_query(request):
             'error': str(e)
         }, status=500)
 
+@csrf_exempt
+@require_http_methods(["POST"])
+@login_required
+def chat_api(request):
+    """
+    Chat API for real-time AI conversations
+    """
+    try:
+        data = json.loads(request.body)
+        message = data.get('message', '')
+        
+        if not message:
+            return JsonResponse({
+                'success': False,
+                'error': 'Message is required'
+            }, status=400)
+        
+        user_id = request.user.id
+        result = nlp_service.process_user_query(user_id, message)
+        
+        return JsonResponse({
+            'success': True,
+            'response': result.get('response', 'I apologize, but I couldn\'t process your request.'),
+            'timestamp': result.get('timestamp', '')
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
 @login_required
 def nlp_dashboard(request):
     """

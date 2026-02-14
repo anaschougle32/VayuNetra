@@ -14,6 +14,9 @@ urlpatterns = [
     # NLP Query Processing
     path('api/process-query/', enhanced_nlp_views.process_nlp_query, name='process_nlp_query'),
     
+    # Chat API
+    path('api/chat/', enhanced_nlp_views.chat_api, name='chat_api'),
+    
     # Carbon Insights
     path('api/carbon-insights/', enhanced_nlp_views.get_carbon_insights, name='carbon_insights'),
     

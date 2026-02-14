@@ -24,6 +24,7 @@ from trips.models import Trip, CarbonCredit
 
 
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 import requests
 
 @login_required
@@ -385,3 +386,48 @@ def pollution_impact_history(request):
     }
     
     return render(request, 'pollution/impact_history.html', context)
+
+@csrf_exempt
+@require_http_methods(["GET"])
+def get_pollution_zones(request):
+    """
+    API endpoint to get pollution zones data for map
+    """
+    try:
+        zones = IndustrialZone.objects.all().values(
+            'id', 'name', 'latitude', 'longitude', 
+            'radius', 'zone_type', 'pollution_level'
+        )
+        
+        zone_list = []
+        for zone in zones:
+            # Determine color based on pollution level
+            color_map = {
+                'low': '#10b981',
+                'moderate': '#f59e0b', 
+                'high': '#ef4444',
+                'very_high': '#991b1b',
+                'hazardous': '#7c2d12'
+            }
+            color = color_map.get(zone['pollution_level'], '#f59e0b')
+            
+            zone_list.append({
+                'id': zone['id'],
+                'name': zone['name'],
+                'latitude': float(zone['latitude']),
+                'longitude': float(zone['longitude']),
+                'radius': zone.get('radius', 2000),
+                'color': color,
+                'zone_type': zone['zone_type']
+            })
+        
+        return JsonResponse({
+            'success': True,
+            'zones': zone_list
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)

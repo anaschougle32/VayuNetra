@@ -301,7 +301,6 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|default:'' }}&callback=initPollutionMap" async defer></script>
 <script>
 function initPollutionMap() {
     // Initialize map with pollution data
@@ -336,5 +335,14 @@ function initPollutionMap() {
         })
         .catch(error => console.error('Error loading pollution zones:', error));
 }
+
+// Load Google Maps API asynchronously
+(function() {
+    const script = document.createElement('script');
+    script.src = 'https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|default:"" }}&callback=initPollutionMap&loading=async';
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+})();
 </script>
 {% endblock %}
