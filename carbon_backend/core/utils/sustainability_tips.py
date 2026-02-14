@@ -20,7 +20,7 @@ def get_user_trip_analysis(user):
     
     Returns a dictionary with analysis data.
     """
-    from trips.models import Trip
+    from trips.models import Trip, CarbonCredit
     from django.db.models import Sum
     
     # Get user's trips from last 30 days
