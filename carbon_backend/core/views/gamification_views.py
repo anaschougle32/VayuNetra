@@ -29,44 +29,80 @@ def gamification_dashboard(request):
     """
     user = request.user
     
-    # Get user's badges
-    user_badges = BadgeService.get_user_badges(user, limit=6)
-    badge_progress = BadgeService.get_badge_progress(user)
-    
-    # Get user's progress
-    user_progress = ProgressService.get_user_progress(user)
-    
-    # Get user's streaks
-    user_streaks = StreakService.get_user_streaks(user)
-    
-    # Get user's points
-    total_points = PointsService.get_user_total_points(user)
-    recent_points = PointsService.get_user_points_history(user, limit=5)
-    
-    # Get leaderboard rankings
-    weekly_carbon_rank = LeaderboardService.get_user_rank(user, 'weekly', 'carbon_saved')
-    weekly_trips_rank = LeaderboardService.get_user_rank(user, 'weekly', 'trips_count')
-    
-    # Get active challenges
-    active_challenges = ChallengeService.get_active_challenges()
-    user_challenges = ChallengeParticipant.objects.filter(
-        user=user,
-        challenge__status='active'
-    ).select_related('challenge')
-    
-    context = {
-        'user_badges': user_badges,
-        'badge_progress': badge_progress,
-        'user_progress': user_progress,
-        'user_streaks': user_streaks,
-        'total_points': total_points,
-        'recent_points': recent_points,
-        'weekly_carbon_rank': weekly_carbon_rank,
-        'weekly_trips_rank': weekly_trips_rank,
-        'active_challenges': active_challenges,
-        'user_challenges': user_challenges,
-        'page_title': 'Gamification Dashboard'
-    }
+    try:
+        # Get user's badges
+        user_badges = BadgeService.get_user_badges(user, limit=6)
+        badge_progress = BadgeService.get_badge_progress(user)
+        
+        # Get user's progress
+        user_progress = ProgressService.get_user_progress(user)
+        
+        # Get user's streaks
+        user_streaks = StreakService.get_user_streaks(user)
+        
+        # Get user's points
+        total_points = PointsService.get_user_total_points(user)
+        recent_points = PointsService.get_user_points_history(user, limit=5)
+        
+        # Get leaderboard rankings
+        weekly_carbon_rank = LeaderboardService.get_user_rank(user, 'weekly', 'carbon_saved')
+        weekly_trips_rank = LeaderboardService.get_user_rank(user, 'weekly', 'trips_count')
+        
+        # Get active challenges
+        active_challenges = ChallengeService.get_active_challenges()
+        user_challenges = ChallengeParticipant.objects.filter(
+            user=user,
+            challenge__status='active'
+        ).select_related('challenge')
+        
+        # Convert QuerySets to lists for JSON serialization
+        user_badges_list = list(user_badges) if user_badges else []
+        badge_progress_list = list(user_progress) if user_progress else []
+        user_streaks_list = list(user_streaks) if user_streaks else []
+        recent_points_list = list(recent_points) if recent_points else []
+        active_challenges_list = []
+        for participant in user_challenges:
+            active_challenges_list.append({
+                'id': participant.challenge.id,
+                'title': participant.challenge.title if participant.challenge else 'Unknown Challenge',
+                'description': participant.challenge.description if participant.challenge else '',
+                'status': participant.challenge.status if participant.challenge else 'active',
+                'progress': participant.progress or 0,
+                'target': participant.challenge.target if participant.challenge else 0,
+                'progress_percentage': (participant.progress / participant.challenge.target * 100) if participant.challenge and participant.challenge.target > 0 else 0,
+                'action_text': participant.challenge.action_text if participant.challenge else 'Join Challenge'
+            })
+        
+        context = {
+            'user_badges': user_badges_list,
+            'badge_progress': badge_progress_list,
+            'user_progress': user_progress_list,
+            'user_streaks': user_streaks_list,
+            'total_points': total_points or 0,
+            'recent_points': recent_points_list,
+            'weekly_carbon_rank': weekly_carbon_rank,
+            'weekly_trips_rank': weekly_trips_rank,
+            'active_challenges': active_challenges_list,
+            'user_challenges': active_challenges_list,
+            'page_title': 'Achievements Dashboard'
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in gamification_dashboard: {str(e)}")
+        # Fallback context with safe defaults
+        context = {
+            'user_badges': [],
+            'badge_progress': [],
+            'user_progress': [],
+            'user_streaks': [],
+            'total_points': 0,
+            'recent_points': [],
+            'weekly_carbon_rank': None,
+            'weekly_trips_rank': None,
+            'active_challenges': [],
+            'user_challenges': [],
+            'page_title': 'Achievements Dashboard'
+        }
     
     return render(request, 'gamification/dashboard.html', context)
 
