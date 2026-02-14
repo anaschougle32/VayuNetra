@@ -1,489 +1,527 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}Enhanced Sustainability Insights{% endblock %}
+{% block title %}AI Insights - VayuNetra{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}">
 <style>
-.nlp-dashboard {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.nlp-interface {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    margin-bottom: 24px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.query-section {
-    margin-bottom: 20px;
-}
-
-.query-input-group {
-    display: flex;
-    gap: 12px;
-    align-items: stretch;
-}
-
-#nlp-query-input {
-    flex: 1;
-    padding: 12px 16px;
-    border: 2px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 16px;
-    transition: border-color 0.3s ease;
-}
-
-#nlp-query-input:focus {
-    outline: none;
-    border-color: #10b981;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
-}
-
-#nlp-submit-btn {
-    padding: 12px 24px;
-    background: linear-gradient(135deg, #10b981, #059669);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-#nlp-submit-btn:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 12px rgba(16, 185, 129, 0.3);
-}
-
-#nlp-submit-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.quick-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.quick-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-align: left;
-    font-size: 14px;
-}
-
-.quick-action-btn:hover {
-    background: #f1f5f9;
-    border-color: #10b981;
-    transform: translateY(-1px);
-}
-
-.action-icon {
-    font-size: 20px;
-}
-
-.action-text {
-    flex: 1;
-    font-weight: 500;
-    color: #374151;
-}
-
-.response-section {
-    margin-top: 24px;
-}
-
-.nlp-response-card {
-    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-    border: 1px solid #bbf7d0;
-    border-radius: 12px;
-    padding: 24px;
-    animation: slideIn 0.5s ease;
-}
-
-.response-content {
-    font-size: 16px;
-    line-height: 1.6;
-    color: #065f46;
-    margin-bottom: 20px;
-}
-
-.emoji-highlight {
-    font-size: 1.2em;
-    animation: pulse 2s infinite;
-}
-
-.emoji-green {
-    color: #10b981;
-}
-
-.response-actions {
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.action-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border: none;
-}
-
-.action-btn.primary {
-    background: #10b981;
-    color: white;
-}
-
-.action-btn.primary:hover {
-    background: #059669;
-}
-
-.action-btn.secondary {
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid #d1d5db;
-}
-
-.action-btn.secondary:hover {
-    background: #e5e7eb;
-}
-
-.insights-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 20px;
-    margin-bottom: 24px;
-}
-
-.insight-card {
-    background: white;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.insight-card.primary {
-    border-left: 4px solid #10b981;
-}
-
-.insight-card.secondary {
-    border-left: 4px solid #f59e0b;
-}
-
-.insight-card.tertiary {
-    border-left: 4px solid #6366f1;
-}
-
-.insight-card h3 {
-    margin: 0 0 16px 0;
-    color: #1f2937;
-    font-size: 18px;
-}
-
-.insight-metrics {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-}
-
-.metric {
-    text-align: center;
-    padding: 12px;
-    background: #f9fafb;
-    border-radius: 8px;
-}
-
-.metric .value {
-    display: block;
-    font-size: 24px;
-    font-weight: 700;
-    color: #10b981;
-    margin-bottom: 4px;
-}
-
-.metric .label {
-    font-size: 12px;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.equivalents {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.equivalent-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 12px;
-    background: #fef3c7;
-    border-radius: 8px;
-}
-
-.equivalent-icon {
-    font-size: 24px;
-}
-
-.equivalent-text {
-    flex: 1;
-    font-size: 14px;
-    color: #92400e;
-}
-
-.weekly-stats {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 16px;
-}
-
-.stat {
-    text-align: center;
-    padding: 16px;
-    background: #ede9fe;
-    border-radius: 8px;
-}
-
-.stat-value {
-    display: block;
-    font-size: 20px;
-    font-weight: 600;
-    color: #6366f1;
-    margin-bottom: 4px;
-}
-
-.stat-label {
-    font-size: 12px;
-    color: #6b7280;
-}
-
-.tips-container {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.tips-container h3 {
-    margin: 0 0 20px 0;
-    color: #1f2937;
-    font-size: 20px;
-}
-
-.tips-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 16px;
-}
-
-.tip-card {
-    padding: 16px;
-    border-radius: 8px;
-    border-left: 4px solid #10b981;
-}
-
-.tip-card.priority-high {
-    background: #fef2f2;
-    border-left-color: #ef4444;
-}
-
-.tip-card.priority-medium {
-    background: #fffbeb;
-    border-left-color: #f59e0b;
-}
-
-.tip-card.priority-low {
-    background: #f0f9ff;
-    border-left-color: #3b82f6;
-}
-
-.tip-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-
-.tip-header h4 {
-    margin: 0;
-    color: #1f2937;
-    font-size: 16px;
-}
-
-.tip-icon {
-    font-size: 20px;
-}
-
-.tip-description {
-    color: #4b5563;
-    font-size: 14px;
-    line-height: 1.5;
-    margin-bottom: 16px;
-}
-
-.tip-actions {
-    text-align: right;
-}
-
-.tip-action {
-    padding: 6px 12px;
-    background: #10b981;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    font-size: 12px;
-    cursor: pointer;
-    transition: background 0.2s ease;
-}
-
-.tip-action:hover {
-    background: #059669;
-}
-
-.error-card {
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 8px;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.error-icon {
-    font-size: 24px;
-    color: #ef4444;
-}
-
-.error-message {
-    color: #991b1b;
-    font-size: 14px;
-}
-
-.notification {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #10b981;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1000;
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-@keyframes pulse {
-    0%, 100% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.1);
-    }
-}
-
-@media (max-width: 768px) {
-    .nlp-dashboard {
-        padding: 12px;
+    .ai-insights-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
     }
     
-    .query-input-group {
+    @media (min-width: 1024px) {
+        .ai-insights-grid {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+    
+    .chat-container {
+        height: 600px;
+        display: flex;
         flex-direction: column;
     }
     
-    .quick-actions {
-        grid-template-columns: 1fr;
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f9fafb;
+        border-bottom: 1px solid #e5e7eb;
     }
     
-    .insights-grid {
-        grid-template-columns: 1fr;
+    .chat-input-container {
+        padding: 1rem;
+        background: white;
     }
     
-    .insight-metrics {
-        grid-template-columns: 1fr;
+    .chat-input-group {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-end;
     }
     
-    .tips-grid {
-        grid-template-columns: 1fr;
+    .chat-input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.875rem;
+        resize: none;
+        min-height: 44px;
+        max-height: 120px;
     }
-}
+    
+    .chat-send-btn {
+        padding: 0.75rem 1.5rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        white-space: nowrap;
+    }
+    
+    .chat-send-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0px 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    
+    .chat-send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .message {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    
+    .message.user {
+        justify-content: flex-end;
+    }
+    
+    .message-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+        flex-shrink: 0;
+    }
+    
+    .message-bubble {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 12px;
+        font-size: 0.875rem;
+        line-height: 1.4;
+        word-wrap: break-word;
+    }
+    
+    .message.ai .message-avatar {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .message.ai .message-bubble {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-top-left-radius: 0;
+    }
+    
+    .message.user .message-avatar {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+    
+    .message.user .message-bubble {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border-top-right-radius: 0;
+    }
+    
+    .message-time {
+        font-size: 0.75rem;
+        color: #9ca3af;
+        margin-top: 0.25rem;
+    }
+    
+    .typing-indicator {
+        display: none;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        border-top-left-radius: 0;
+        width: fit-content;
+    }
+    
+    .typing-indicator.active {
+        display: flex;
+    }
+    
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #6b7280;
+        animation: typing 1.4s infinite;
+    }
+    
+    .typing-dot:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-dot:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% { opacity: 0.3; }
+        30% { opacity: 1; }
+    }
+    
+    .insight-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .quick-action-btn {
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        text-align: left;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .quick-action-btn:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+        transform: translateY(-2px);
+        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .quick-action-title {
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 0.25rem;
+    }
+    
+    .quick-action-desc {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .insight-stats {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .insight-stat {
+        text-align: center;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 8px;
+    }
+    
+    .insight-stat-value {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #1f2937;
+    }
+    
+    .insight-stat-label {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="nlp-dashboard">
-    <!-- NLP Interface -->
-    <div class="nlp-interface">
-        <h2>🤖 Advanced Sustainability Insights</h2>
-        <p style="color: #6b7280; margin-bottom: 20px;">
-            Ask me anything about your carbon footprint, get personalized tips, and discover your environmental impact!
-        </p>
-        
-        <div class="query-section">
-            <div class="query-input-group">
-                <input 
-                    type="text" 
-                    id="nlp-query-input" 
-                    placeholder="Ask about your carbon footprint... (e.g., 'How much CO₂ did I save this week?')"
-                    autocomplete="off"
-                >
-                <button id="nlp-submit-btn">🚀 Ask</button>
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="px-6">
+            <h1 class="page-title">AI Insights</h1>
+            <p class="page-subtitle">Get personalized sustainability recommendations and analysis</p>
+        </div>
+    </div>
+
+    <div class="ai-insights-grid">
+        <!-- Chat Interface -->
+        <div class="modern-card p-6 chat-container">
+            <div class="chat-header">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                            AI
+                        </div>
+                        <div>
+                            <h3 class="font-semibold">Sustainability Assistant</h3>
+                            <p class="text-sm opacity-90">Ask me anything about your carbon footprint</p>
+                        </div>
+                    </div>
+                    <button class="text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-lg transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="chat-messages" id="chat-messages">
+                <!-- Welcome Message -->
+                <div class="message ai">
+                    <div class="message-avatar">🤖</div>
+                    <div>
+                        <div class="message-bubble">
+                            Hello! I'm your sustainability assistant. I can help you with:
+                            <ul class="mt-2 space-y-1">
+                                <li>• Personalized carbon footprint analysis</li>
+                                <li>• Sustainable transportation recommendations</li>
+                                <li>• Energy saving tips</li>
+                                <li>• Environmental impact insights</li>
+                            </ul>
+                            How can I help you today?
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+                
+                <!-- Typing Indicator -->
+                <div class="message ai" id="typing-indicator" style="display: none;">
+                    <div class="message-avatar">🤖</div>
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="chat-input-container">
+                <div class="chat-input-group">
+                    <textarea 
+                        id="chat-input" 
+                        class="chat-input" 
+                        placeholder="Ask about your carbon footprint, sustainability tips, or environmental impact..."
+                        rows="1"
+                    ></textarea>
+                    <button id="send-btn" class="chat-send-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                    </button>
+                </div>
             </div>
         </div>
-        
-        <div id="quick-actions"></div>
-    </div>
-    
-    <!-- Response Section -->
-    <div class="response-section">
-        <div id="nlp-response"></div>
-    </div>
-    
-    <!-- Carbon Insights -->
-    <div id="carbon-insights"></div>
-    
-    <!-- Sustainability Tips -->
-    <div id="sustainability-tips"></div>
-    
-    <!-- Query History -->
-    <div style="margin-top: 24px;">
-        <div id="query-history"></div>
+
+        <!-- Sidebar -->
+        <div class="insight-cards">
+            <!-- Stats Card -->
+            <div class="modern-card p-6">
+                <h3 class="section-title mb-4">Your Impact</h3>
+                <div class="insight-stats">
+                    <div class="insight-stat">
+                        <div class="insight-stat-value">{{ user_carbon_saved|default:0 }}</div>
+                        <div class="insight-stat-label">kg CO₂ Saved</div>
+                    </div>
+                    <div class="insight-stat">
+                        <div class="insight-stat-value">{{ user_trips_count|default:0 }}</div>
+                        <div class="insight-stat-label">Green Trips</div>
+                    </div>
+                    <div class="insight-stat">
+                        <div class="insight-stat-value">{{ user_credits|default:0 }}</div>
+                        <div class="insight-stat-label">Credits Earned</div>
+                    </div>
+                    <div class="insight-stat">
+                        <div class="insight-stat-value">{{ user_rank|default:'N/A' }}</div>
+                        <div class="insight-stat-label">Your Rank</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="modern-card p-6">
+                <h3 class="section-title mb-4">Quick Actions</h3>
+                <div class="space-y-3">
+                    <button class="quick-action-btn" onclick="sendQuickQuery('Analyze my carbon footprint')">
+                        <div class="quick-action-title">📊 Analyze My Impact</div>
+                        <div class="quick-action-desc">Get detailed analysis of your environmental footprint</div>
+                    </button>
+                    
+                    <button class="quick-action-btn" onclick="sendQuickQuery('Give me sustainability tips')">
+                        <div class="quick-action-title">💡 Sustainability Tips</div>
+                        <div class="quick-action-desc">Personalized recommendations for greener living</div>
+                    </button>
+                    
+                    <button class="quick-action-btn" onclick="sendQuickQuery('Compare my transport options')">
+                        <div class="quick-action-title">🚗 Transport Comparison</div>
+                        <div class="quick-action-desc">Compare carbon impact of different transport modes</div>
+                    </button>
+                    
+                    <button class="quick-action-btn" onclick="sendQuickQuery('How can I reduce my energy usage')">
+                        <div class="quick-action-title">⚡ Energy Savings</div>
+                        <div class="quick-action-desc">Tips to reduce energy consumption at home</div>
+                    </button>
+                    
+                    <button class="quick-action-btn" onclick="sendQuickQuery('What are the best sustainable habits')">
+                        <div class="quick-action-title">🌱 Eco Habits</div>
+                        <div class="quick-action-desc">Build sustainable daily routines</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Insights -->
+            <div class="modern-card p-6">
+                <h3 class="section-title mb-4">Recent Insights</h3>
+                <div class="space-y-3">
+                    {% if recent_insights %}
+                        {% for insight in recent_insights %}
+                        <div class="p-3 bg-gray-50 rounded-lg">
+                            <div class="text-sm font-medium text-gray-900">{{ insight.title|default:'Sustainability Tip' }}</div>
+                            <div class="text-xs text-gray-600 mt-1">{{ insight.summary|default:'Great progress on your eco-journey!' }}</div>
+                            <div class="text-xs text-gray-400 mt-2">{{ insight.created_at|default:now|date:'M d' }}</div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center text-gray-500 py-4">
+                            <p class="text-sm">Start chatting to get personalized insights!</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'js/enhanced-nlp.js?v=1.0.0' %}"></script>
+<script>
+class AIInsightsChat {
+    constructor() {
+        this.chatMessages = document.getElementById('chat-messages');
+        this.chatInput = document.getElementById('chat-input');
+        this.sendBtn = document.getElementById('send-btn');
+        this.typingIndicator = document.getElementById('typing-indicator');
+        
+        this.initEventListeners();
+        this.autoResizeTextarea();
+    }
+    
+    initEventListeners() {
+        this.sendBtn.addEventListener('click', () => this.sendMessage());
+        this.chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                this.sendMessage();
+            }
+        });
+    }
+    
+    autoResizeTextarea() {
+        this.chatInput.addEventListener('input', () => {
+            this.chatInput.style.height = 'auto';
+            this.chatInput.style.height = Math.min(this.chatInput.scrollHeight, 120) + 'px';
+        });
+    }
+    
+    sendMessage() {
+        const message = this.chatInput.value.trim();
+        if (!message) return;
+        
+        // Add user message
+        this.addMessage(message, 'user');
+        this.chatInput.value = '';
+        this.chatInput.style.height = 'auto';
+        
+        // Show typing indicator
+        this.showTypingIndicator();
+        
+        // Send to API
+        this.sendToAI(message);
+    }
+    
+    addMessage(content, sender, timestamp = null) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}`;
+        
+        const avatar = sender === 'user' ? '👤' : '🤖';
+        const time = timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        
+        messageDiv.innerHTML = `
+            <div class="message-avatar">${avatar}</div>
+            <div>
+                <div class="message-bubble">${content}</div>
+                <div class="message-time">${time}</div>
+            </div>
+        `;
+        
+        this.chatMessages.appendChild(messageDiv);
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+    
+    showTypingIndicator() {
+        this.typingIndicator.style.display = 'flex';
+        this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+    }
+    
+    hideTypingIndicator() {
+        this.typingIndicator.style.display = 'none';
+    }
+    
+    async sendToAI(message) {
+        try {
+            const response = await fetch('/api/enhanced-nlp/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({ message })
+            });
+            
+            const data = await response.json();
+            
+            this.hideTypingIndicator();
+            
+            if (data.success) {
+                this.addMessage(data.response, 'ai');
+            } else {
+                this.addMessage('Sorry, I encountered an error. Please try again.', 'ai');
+            }
+        } catch (error) {
+            this.hideTypingIndicator();
+            this.addMessage('Sorry, I\'m having trouble connecting. Please try again later.', 'ai');
+            console.error('AI Chat Error:', error);
+        }
+    }
+}
+
+// Quick query function
+function sendQuickQuery(query) {
+    if (window.aiChat) {
+        window.aiChat.chatInput.value = query;
+        window.aiChat.sendMessage();
+    }
+}
+
+// Helper function to get CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Initialize chat when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.aiChat = new AIInsightsChat();
+});
+</script>
 {% endblock %}
