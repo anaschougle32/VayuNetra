@@ -59,11 +59,38 @@ class WalletService:
                 'wallet_id': str(wallet.id)
             }
         except CarbonWallet.DoesNotExist:
+            # Create wallet if it doesn't exist and calculate initial balance
+            wallet, created = WalletService.get_or_create_wallet(user, wallet_type)
+            
+            # Calculate credits from existing trips
+            from trips.models import Trip
+            trips = Trip.objects.filter(employee=user.employee_profile, verification_status='verified')
+            total_credits = 0
+            
+            for trip in trips:
+                # Calculate credits based on trip data
+                base_credits = Decimal('1.0')
+                
+                # Bonus for eco-friendly transport
+                if trip.transport_mode in ['bicycle', 'walking', 'electric_vehicle']:
+                    base_credits *= Decimal('1.5')
+                
+                # Bonus for longer distances
+                if trip.distance_km:
+                    distance_bonus = min(trip.distance_km * Decimal('0.1'), Decimal('2.0'))
+                    base_credits += distance_bonus
+                
+                total_credits += base_credits
+            
+            # Add calculated credits to wallet
+            if total_credits > 0:
+                wallet.add_credits(total_credits, 'trip', 'Initial credit calculation from existing trips')
+            
             return {
-                'total_balance': 0,
-                'available_balance': 0,
-                'frozen_balance': 0,
-                'wallet_id': None
+                'total_balance': float(wallet.balance),
+                'available_balance': float(wallet.available_balance),
+                'frozen_balance': float(wallet.frozen_balance),
+                'wallet_id': str(wallet.id)
             }
     
     @staticmethod
@@ -331,7 +358,7 @@ class SmartContractService:
     def process_trip_rewards(trip):
         """Automatically award credits for completed trips"""
         try:
-            if not trip.is_completed:
+            if trip.verification_status != 'verified':
                 return None
             
             # Calculate credits based on trip data
