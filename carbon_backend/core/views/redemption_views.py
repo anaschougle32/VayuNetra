@@ -9,9 +9,9 @@ from django.contrib import messages
 from django.db.models import Sum, Avg
 from django.utils import timezone
 from decimal import Decimal
-from trips.models import CarbonCredit
 from marketplace.models import EmployeeCreditOffer, MarketOffer
 from users.models import EmployeeProfile
+from core.wallet_service import WalletService
 
 @login_required
 @user_passes_test(lambda u: u.is_employee)
@@ -26,12 +26,9 @@ def redeem_credits(request):
         messages.error(request, "You are not associated with an employer.")
         return redirect('employee_dashboard')
     
-    # Get employee's available credits (active, not redeemed)
-    available_credits = CarbonCredit.objects.filter(
-        owner_type='employee',
-        owner_id=employee.id,
-        status='active'
-    ).aggregate(Sum('amount'))['amount__sum'] or Decimal('0')
+    # Get employee's available credits from new wallet system
+    wallet_balance = WalletService.get_wallet_balance(request.user)
+    available_credits = Decimal(str(wallet_balance['available_balance']))
     
     # Get current market rate (for calculating value)
     market_rate = MarketOffer.objects.filter(

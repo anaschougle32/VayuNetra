@@ -396,28 +396,34 @@ def get_pollution_zones(request):
     try:
         zones = IndustrialZone.objects.all().values(
             'id', 'name', 'latitude', 'longitude', 
-            'radius', 'zone_type', 'pollution_level'
+            'radius_km', 'zone_type', 'emission_intensity'
         )
         
         zone_list = []
         for zone in zones:
-            # Determine color based on pollution level
-            color_map = {
-                'low': '#10b981',
-                'moderate': '#f59e0b', 
-                'high': '#ef4444',
-                'very_high': '#991b1b',
-                'hazardous': '#7c2d12'
-            }
-            color = color_map.get(zone['pollution_level'], '#f59e0b')
+            # Determine color based on emission intensity
+            intensity = float(zone.get('emission_intensity', 50))
+            if intensity < 50:
+                color = '#10b981'  # Low pollution
+                pollution_level = 'low'
+            elif intensity < 100:
+                color = '#f59e0b'  # Moderate pollution
+                pollution_level = 'moderate'
+            elif intensity < 200:
+                color = '#ef4444'  # High pollution
+                pollution_level = 'high'
+            else:
+                color = '#991b1b'  # Very high pollution
+                pollution_level = 'very_high'
             
             zone_list.append({
                 'id': zone['id'],
                 'name': zone['name'],
                 'latitude': float(zone['latitude']),
                 'longitude': float(zone['longitude']),
-                'radius': zone.get('radius', 2000),
+                'radius': float(zone.get('radius_km', 5.0)) * 1000,  # Convert km to meters
                 'color': color,
+                'pollution_level': pollution_level,
                 'zone_type': zone['zone_type']
             })
         

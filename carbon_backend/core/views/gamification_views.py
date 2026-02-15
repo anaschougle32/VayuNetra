@@ -79,7 +79,7 @@ def gamification_dashboard(request):
         context = {
             'user_badges': user_badges_list,
             'badge_progress': badge_progress_list,
-            'user_progress': user_progress_list,
+            'user_progress': user_progress,
             'user_streaks': user_streaks_list,
             'total_points': total_points or 0,
             'recent_points': recent_points_list,
