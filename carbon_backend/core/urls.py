@@ -11,4 +11,7 @@ urlpatterns = [
     
     # Include predictive analytics URLs
     path('analytics/', include('core.predictive_analytics_urls', namespace='predictive_analytics')),
+    
+    # Include wallet URLs
+    path('wallet/', include('core.wallet_urls', namespace='wallet')),
 ]
