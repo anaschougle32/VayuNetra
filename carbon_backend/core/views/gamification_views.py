@@ -71,9 +71,9 @@ def gamification_dashboard(request):
                 'description': participant.challenge.description if participant.challenge else '',
                 'status': participant.challenge.status if participant.challenge else 'active',
                 'progress': participant.current_value or 0,
-                'target': participant.challenge.target if participant.challenge else 0,
-                'progress_percentage': (participant.current_value / participant.challenge.target * 100) if participant.challenge and participant.challenge.target > 0 else 0,
-                'action_text': participant.challenge.action_text if participant.challenge else 'Join Challenge'
+                'target': participant.challenge.target_value if participant.challenge else 0,
+                'progress_percentage': (participant.current_value / participant.challenge.target_value * 100) if participant.challenge and participant.challenge.target_value > 0 else 0,
+                'action_text': 'Join Challenge'  # CommunityChallenge doesn't have action_text field
             })
         
         context = {
