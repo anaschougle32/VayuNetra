@@ -337,13 +337,18 @@
 
             <!-- Recent Badges -->
             <div class="achievements-section">
-                <h2 class="section-title mb-4">Recent Badges</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="section-title">Recent Badges</h2>
+                    <a href="{% url 'gamification:badges' %}" class="action-btn px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                        View All Badges
+                    </a>
+                </div>
                 <div class="achievements-grid">
                     {% for badge in user_badges %}
                     <div class="achievement-card earned">
-                        <div class="achievement-icon">{{ badge.icon|default:'🏆' }}</div>
-                        <h3 class="achievement-title">{{ badge.name|default:'Eco Warrior' }}</h3>
-                        <p class="achievement-description">{{ badge.description|default:'Environmental champion' }}</p>
+                        <div class="achievement-icon">{{ badge.badge.icon|default:'🏆' }}</div>
+                        <h3 class="achievement-title">{{ badge.badge.name }}</h3>
+                        <p class="achievement-description">{{ badge.badge.description }}</p>
                         <div class="achievement-date">
                             Earned on {{ badge.earned_at|date:'M d, Y' }}
                         </div>
@@ -361,11 +366,11 @@
                 <h2 class="section-title mb-4">Your Progress</h2>
                 {% for progress in user_progress %}
                 <div class="progress-item">
-                    <div class="progress-label">{{ progress.type_name|default:'Daily Trips' }}</div>
+                    <div class="progress-label">{{ progress.get_progress_type_display }}</div>
                     <div class="progress-bar-container">
-                        <div class="progress-fill" style="width: {{ progress.percentage|default:0 }}%"></div>
+                        <div class="progress-fill" style="width: {{ progress.percentage_complete|default:0 }}%"></div>
                     </div>
-                    <div class="text-sm text-gray-600">{{ progress.current|default:0 }}/{{ progress.target|default:10 }}</div>
+                    <div class="text-sm text-gray-600">{{ progress.current_value|default:0 }}/{{ progress.target_value|default:10 }}</div>
                 </div>
                 {% empty %}
                 <div class="text-center text-gray-500 py-4">
@@ -379,10 +384,10 @@
                 <h2 class="section-title mb-4">Current Streaks</h2>
                 {% for streak in user_streaks %}
                 <div class="streak-item">
-                    <div class="streak-icon">{{ streak.icon|default:'🔥' }}</div>
+                    <div class="streak-icon">🔥</div>
                     <div class="streak-info">
-                        <div class="streak-title">{{ streak.name|default:'Daily Trips' }}</div>
-                        <div class="streak-value">{{ streak.count|default:0 }} days</div>
+                        <div class="streak-title">{{ streak.get_streak_type_display }}</div>
+                        <div class="streak-value">{{ streak.current_streak|default:0 }} days</div>
                     </div>
                 </div>
                 {% empty %}
@@ -439,10 +444,10 @@
                     {% for point in recent_points %}
                     <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                         <div class="text-sm">
-                            <div class="font-medium">{{ point.reason|default:'Trip Completed' }}</div>
+                            <div class="font-medium">{{ point.description }}</div>
                             <div class="text-gray-500">{{ point.created_at|date:'M d, H:i' }}</div>
                         </div>
-                        <div class="font-semibold text-green-600">+{{ point.points|default:10 }}</div>
+                        <div class="font-semibold text-green-600">+{{ point.points }}</div>
                     </div>
                     {% empty %}
                     <div class="text-center text-gray-500 py-4">
