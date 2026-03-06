@@ -202,7 +202,7 @@
     .stats-overview {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 1.5rem;
+        gap: 1rem;
         margin-bottom: 2rem;
     }
     
@@ -282,20 +282,15 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-8">
-    <!-- Header -->
-    <div class="modern-card p-6 mb-8">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-2xl text-white mr-4">
-                    🏆
-                </div>
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-800">All Badges</h1>
-                    <p class="text-gray-600">Track your achievements and progress towards new badges</p>
-                </div>
+<div class="page-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="px-6 flex justify-between items-center">
+            <div>
+                <h1 class="page-title">All Badges</h1>
+                <p class="page-subtitle">Track your achievements and progress towards new badges</p>
             </div>
-            <a href="{% url 'gamification:dashboard' %}" class="action-btn">
+            <a href="{% url 'gamification:dashboard' %}" class="action-btn bg-white bg-opacity-20 hover:bg-opacity-30 text-white border border-white border-opacity-30">
                 ← Back to Dashboard
             </a>
         </div>
