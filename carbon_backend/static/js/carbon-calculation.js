@@ -6,16 +6,18 @@
  */
 
 // Emission factors (WRI India 2015)
-const EMISSION_FACTORS = {
-    'car': { baseline: 0.130, actual: 0.130 },
-    'carpool': { baseline: 0.130, actual: 0.071 },
-    'two_wheeler_single': { baseline: 0.130, actual: 0.029 },
-    'two_wheeler_double': { baseline: 0.130, actual: 0.0145 },
-    'public_transport': { baseline: 0.130, actual: 0.015161 },
-    'bicycle': { baseline: 0.120, actual: 0.000 },
-    'walking': { baseline: 0.150, actual: 0.000 },
-    'work_from_home': { baseline: 0.130, actual: 0.000 }
-};
+if (typeof EMISSION_FACTORS === 'undefined') {
+    window.EMISSION_FACTORS = {
+        'car': { baseline: 0.130, actual: 0.130 },
+        'carpool': { baseline: 0.130, actual: 0.071 },
+        'two_wheeler_single': { baseline: 0.130, actual: 0.029 },
+        'two_wheeler_double': { baseline: 0.130, actual: 0.0145 },
+        'public_transport': { baseline: 0.130, actual: 0.015161 },
+        'bicycle': { baseline: 0.120, actual: 0.000 },
+        'walking': { baseline: 0.150, actual: 0.000 },
+        'work_from_home': { baseline: 0.130, actual: 0.000 }
+    };
+}
 
 // Peak factors (IPCC-based)
 const PEAK_FACTORS = {
@@ -136,7 +138,7 @@ function calculateCredits(mode, distance, timePeriod, trafficCondition, weather,
         return 10.0; // Fixed credits for WFH
     }
     
-    const factors = EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
+    const factors = window.EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
     const emissionDiff = factors.baseline - factors.actual;
     const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
     const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
@@ -176,7 +178,7 @@ function updateCreditPreview() {
     const aqiLevel = document.getElementById('aqi_level')?.value || 'moderate';
     const season = document.getElementById('season')?.value || 'normal';
     
-    const factors = EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
+    const factors = window.EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
     const emissionDiff = factors.baseline - factors.actual;
     const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
     const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
@@ -200,7 +202,7 @@ function updateCreditPreview() {
  * Update credit display for each transport mode (example for 1 km)
  */
 function updateModeCredits() {
-    Object.keys(EMISSION_FACTORS).forEach(mode => {
+    Object.keys(window.EMISSION_FACTORS).forEach(mode => {
         const creditElement = document.getElementById(`credits-${mode}`);
         if (creditElement && mode !== 'work_from_home') {
             const defaultTimePeriod = 'off_peak';
