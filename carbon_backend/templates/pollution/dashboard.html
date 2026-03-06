@@ -339,7 +339,8 @@ function initPollutionMap() {
 // Load Google Maps API asynchronously
 (function() {
     const script = document.createElement('script');
-    script.src = 'https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key|default:"" }}&callback=initPollutionMap&loading=async';
+    // Load Google Maps API using Keyless approach
+    script.src = 'https://cdn.jsdelivr.net/gh/somanchiu/Keyless-Google-Maps-API@v7.1/mapsJavaScriptAPI.js';
     script.async = true;
     script.defer = true;
     document.head.appendChild(script);

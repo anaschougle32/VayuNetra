@@ -156,7 +156,7 @@
 {% block extra_js %}
 {% if google_maps_api_key and google_maps_api_key != 'AIzaSyA-test-key-for-development-only' and google_maps_api_key|length > 20 %}
 <!-- Load Google Maps API with the provided API key -->
-<script src="https://maps.googleapis.com/maps/api/js?key={{ google_maps_api_key }}&libraries=places,geometry&callback=initMap" async defer></script>
+<script src="https://cdn.jsdelivr.net/gh/somanchiu/Keyless-Google-Maps-API@v7.1/mapsJavaScriptAPI.js" async defer></script>
 <script>
     // Initialize globals
     var hasExistingLocation = {% if has_home_location %}true{% else %}false{% endif %};

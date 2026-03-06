@@ -636,7 +636,10 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Load our JavaScript files FIRST (before Google Maps) -->
+<!-- Load Google Maps API using Keyless approach -->
+<script src="https://cdn.jsdelivr.net/gh/somanchiu/Keyless-Google-Maps-API@v7.1/mapsJavaScriptAPI.js" async defer></script>
+
+<!-- Load our JavaScript files -->
 <script src="/static/js/carbon-calculation.js"></script>
 <script src="/static/js/trip-log.js"></script>
 <script src="/static/js/file-upload.js"></script>
@@ -705,22 +708,13 @@
                 '&nbsp;&nbsp;&nbsp;&nbsp;<code class="bg-gray-200 px-1">http://127.0.0.1:8000/*</code></li>' +
                 '<li>Click "SAVE" and wait 1-2 minutes</li>' +
                 '<li>Refresh this page</li>' +
-                '</ol>' +
-                '</div>';
         });
     };
     
-    // Load Google Maps API with proper error handling
-    (function() {
-        var script = document.createElement('script');
-        script.type = 'text/javascript';
-        var apiKey = '{{ google_maps_api_key }}';
-        script.src = 'https://maps.googleapis.com/maps/api/js?key=' + apiKey + '&libraries=places,geometry&callback=initMap';
-        script.async = true;
-        script.defer = true;
-        
-        script.onerror = function() {
-            console.error('Failed to load Google Maps API script');
+    // Add timeout check
+    var timeout = setTimeout(function() {
+        if (typeof google === 'undefined' || typeof google.maps === 'undefined') {
+            console.error('Google Maps API did not load within timeout period');
             document.querySelectorAll('.map-loading').forEach(loading => {
                 loading.innerHTML = `
                     <div class="p-4 bg-red-100 text-red-800 rounded">
