@@ -817,37 +817,6 @@
     }
     window.initMap = initMap;
 </script>
-{% else %}
-<script>
-    console.error('Google Maps API key not configured or invalid');
-    console.log('API Key value:', '{{ google_maps_api_key }}');
-    console.log('API Key length:', '{{ google_maps_api_key|length }}');
-    
-    function initMap() {
-        console.error('Google Maps API key not available');
-        var errorMsg = '';
-        if (!'{{ google_maps_api_key }}' || '{{ google_maps_api_key }}' === 'AIzaSyA-test-key-for-development-only') {
-            errorMsg = `
-                <div class="p-4 bg-red-100 text-red-800 rounded">
-                    <strong>Google Maps API Key Not Configured</strong><br>
-                    <p class="mt-2 text-sm">Please set GOOGLE_MAPS_API_KEY in your environment variables or Django settings.</p>
-                    <p class="mt-2 text-xs">Current value: {{ google_maps_api_key|default:"Not set" }}</p>
-                </div>
-            `;
-        } else {
-            errorMsg = `
-                <div class="p-4 bg-red-100 text-red-800 rounded">
-                    <strong>Invalid Google Maps API Key</strong><br>
-                    <p class="mt-2 text-sm">The API key appears to be invalid or too short.</p>
-                </div>
-            `;
-        }
-        
-        document.querySelectorAll('.map-loading').forEach(loading => {
-            loading.innerHTML = errorMsg;
-        });
-    }
-</script>
 {% endif %}
 
 <!-- Include the file upload modal component -->
