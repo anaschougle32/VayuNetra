@@ -327,77 +327,15 @@ function initializeMap() {
     // Set up search box with autocomplete for better UX
     const searchInput = document.getElementById('map-search-input');
     if (searchInput) {
-        // Use Autocomplete instead of SearchBox for better functionality
-        let autocomplete;
-        try {
-            autocomplete = new google.maps.places.Autocomplete(searchInput, {
-                types: ['geocode', 'establishment'],
-                componentRestrictions: { country: 'in' } // Restrict to India
-            });
-        } catch (e) {
-            console.warn('Autocomplete not available, using SearchBox:', e);
-            // Fallback to SearchBox
-            autocomplete = new google.maps.places.SearchBox(searchInput);
-        }
-        
-        // Bias search results to current map view
-        map.addListener('bounds_changed', function() {
-            if (autocomplete.setBounds) {
-                autocomplete.setBounds(map.getBounds());
-            }
-        });
-        
-        // Update when dropdown changes
-        const startSelect = document.getElementById('start-location');
-        const endSelect = document.getElementById('end-location');
-        
-        if (startSelect) {
-            startSelect.addEventListener('focus', function() {
-                settingLocationType = 'start';
-                searchInput.placeholder = 'Search for start location...';
-            });
-        }
-        
-        if (endSelect) {
-            endSelect.addEventListener('focus', function() {
-                settingLocationType = 'end';
-                searchInput.placeholder = 'Search for end location...';
-            });
-        }
-        
-        // Handle search results
-        const handlePlaceSelect = function() {
-            let place;
-            
-            if (autocomplete.getPlace) {
-                // Autocomplete
-                place = autocomplete.getPlace();
-            } else {
-                // SearchBox fallback
-                const places = autocomplete.getPlaces();
-                if (places.length === 0) return;
-                place = places[0];
-            }
-            
-            if (!place || !place.geometry || !place.geometry.location) {
-                console.warn('Place has no geometry');
-                return;
-            }
-            
-            // Get location coordinates
-            const location = {
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng(),
-                address: place.formatted_address || place.name
-            };
-            
-            console.log('Place selected:', location);
-            
-            // Determine which location to set
-            const currentSettingType = settingLocationType || window.settingLocationType;
-            const locationType = currentSettingType || 
-                                (document.activeElement && document.activeElement.id === 'start-location' ? 'start' : 
-                                 document.activeElement && document.activeElement.id === 'end-location' ? 'end' : null);
+        // Check if Places API is available
+        if (typeof google.maps.places !== 'undefined' && google.maps.places.Autocomplete) {
+            // Use Autocomplete if available
+            let autocomplete;
+            try {
+                autocomplete = new google.maps.places.Autocomplete(searchInput, {
+                    types: ['geocode', 'establishment'],
+                    componentRestrictions: { country: 'in' } // Restrict to India
+                });
             
             if (locationType === 'start') {
                 // Set start location
@@ -479,6 +417,40 @@ function initializeMap() {
                 e.preventDefault();
                 handlePlaceSelect();
             }
+        });
+    }
+    
+    // Fallback function for manual location entry
+    function setupManualLocationEntry() {
+        const searchInput = document.getElementById('map-search-input');
+        if (!searchInput) return;
+        
+        // Add placeholder text to indicate manual entry
+        searchInput.placeholder = 'Click on map to select location';
+        
+        // Add click handler to map for manual selection
+        map.addListener('click', function(event) {
+            const lat = event.latLng.lat();
+            const lng = event.latLng.lng();
+            
+            // Update form fields
+            document.getElementById('start-lat').value = lat;
+            document.getElementById('start-lng').value = lng;
+            document.getElementById('start-location').value = `Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}`;
+            
+            // Add marker
+            const marker = new google.maps.Marker({
+                position: { lat: lat, lng: lng },
+                map: map,
+                title: 'Selected Location',
+                icon: {
+                    url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png',
+                    scaledSize: new google.maps.Size(32, 32)
+                }
+            });
+            
+            // Trigger location selection
+            handleLocationSelection('start', { lat: lat, lng: lng }, document.getElementById('start-location').value);
         });
     }
     

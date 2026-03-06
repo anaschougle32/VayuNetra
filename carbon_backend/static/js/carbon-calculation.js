@@ -6,8 +6,8 @@
  */
 
 // Emission factors (WRI India 2015)
-if (typeof EMISSION_FACTORS === 'undefined') {
-    window.EMISSION_FACTORS = {
+if (typeof CARBON_EMISSION_FACTORS === 'undefined') {
+    window.CARBON_EMISSION_FACTORS = {
         'car': { baseline: 0.130, actual: 0.130 },
         'carpool': { baseline: 0.130, actual: 0.071 },
         'two_wheeler_single': { baseline: 0.130, actual: 0.029 },
@@ -138,7 +138,7 @@ function calculateCredits(mode, distance, timePeriod, trafficCondition, weather,
         return 10.0; // Fixed credits for WFH
     }
     
-    const factors = window.EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
+    const factors = window.CARBON_EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
     const emissionDiff = factors.baseline - factors.actual;
     const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
     const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
@@ -178,7 +178,7 @@ function updateCreditPreview() {
     const aqiLevel = document.getElementById('aqi_level')?.value || 'moderate';
     const season = document.getElementById('season')?.value || 'normal';
     
-    const factors = window.EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
+    const factors = window.CARBON_EMISSION_FACTORS[mode] || { baseline: 0.130, actual: 0.130 };
     const emissionDiff = factors.baseline - factors.actual;
     const timeWeight = calculateTimeWeight(timePeriod, trafficCondition);
     const contextFactor = calculateContextFactor(weather, routeType, aqiLevel, season, mode);
@@ -202,7 +202,7 @@ function updateCreditPreview() {
  * Update credit display for each transport mode (example for 1 km)
  */
 function updateModeCredits() {
-    Object.keys(window.EMISSION_FACTORS).forEach(mode => {
+    Object.keys(window.CARBON_EMISSION_FACTORS).forEach(mode => {
         const creditElement = document.getElementById(`credits-${mode}`);
         if (creditElement && mode !== 'work_from_home') {
             const defaultTimePeriod = 'off_peak';
@@ -243,5 +243,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Also export for direct access
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { initMap, calculateHaversineDistance, autoDetectEnvironmentData };
+}
 
 
