@@ -345,7 +345,7 @@
                         <h3 class="achievement-title">{{ badge.name|default:'Eco Warrior' }}</h3>
                         <p class="achievement-description">{{ badge.description|default:'Environmental champion' }}</p>
                         <div class="achievement-date">
-                            Earned on {{ badge.earned_date|default:now|date:'M d, Y' }}
+                            Earned on {{ badge.earned_at|date:'M d, Y' }}
                         </div>
                     </div>
                     {% empty %}
@@ -440,7 +440,7 @@
                     <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                         <div class="text-sm">
                             <div class="font-medium">{{ point.reason|default:'Trip Completed' }}</div>
-                            <div class="text-gray-500">{{ point.created_at|default:now|date:'M d, H:i' }}</div>
+                            <div class="text-gray-500">{{ point.created_at|date:'M d, H:i' }}</div>
                         </div>
                         <div class="font-semibold text-green-600">+{{ point.points|default:10 }}</div>
                     </div>
