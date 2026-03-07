@@ -452,7 +452,7 @@
 <script>
     // Debug: Log API key status (first 15 chars only for security)
     console.log('Google Maps API Key configured:', '{{ google_maps_api_key|slice:":15" }}...');
-    console.log('API Key length:', {{ google_maps_api_key|length }});
+    console.log('API Key length:', '{{ google_maps_api_key|length }}');
     
     // Define error handler for Google Maps
     window.gm_authFailure = function() {
@@ -671,7 +671,7 @@
         const routeFactor = ROUTE_FACTORS[routeType] || 1.0;
         const aqiFactor = AQI_FACTORS[aqiLevel] || 1.0;
         const seasonalFactor = SEASONAL_FACTORS[season] || 1.0;
-        const loadFactor = mode === 'two_wheeler_double' ? 1.02 : (mode === 'two_wheeler_single' ? 0.95 : 1.0;
+        const loadFactor = mode === 'two_wheeler_double' ? 1.02 : (mode === 'two_wheeler_single' ? 0.95 : 1.0);
         return weatherFactor * routeFactor * aqiFactor * seasonalFactor * loadFactor;
     }
     
