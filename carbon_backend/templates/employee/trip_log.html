@@ -636,8 +636,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Load Google Maps API with the provided API key and callback -->
-{% if google_maps_api_key and google_maps_api_key != 'AIzaSyA-test-key-for-development-only' and google_maps_api_key|length > 20 %}
+<!-- Load our JavaScript files -->
 <script src="/static/js/carbon-calculation.js"></script>
 <script src="/static/js/trip-log.js"></script>
 <script src="/static/js/file-upload.js"></script>
